@@ -12,7 +12,7 @@ const processImage = async (beneficiaryId, publicName, base64) => {
 
   const extension = publicName.substring(publicName.lastIndexOf('.'));
   const privateName = `BENEFICIARY_${nanoid(20)}${extension}`;
-  const imagePath = path.join(PATHS.PROFILE_IMAGES, privateName);
+  const imagePath = path.join(PATHS.BENFICIARY_IMAGES, privateName);
 
   try {
     await buildImage(privateName, 'beneficiary', base64);

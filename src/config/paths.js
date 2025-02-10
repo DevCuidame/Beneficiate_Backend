@@ -1,7 +1,8 @@
 // config/paths.js
 const PATHS = {
     UPLOADS: './uploads/',
-    PROFILE_IMAGES: './uploads/beneficiary/',
+    BENFICIARY_IMAGES: './uploads/beneficiary/',
+    USER_IMAGES: './uploads/user/',
     DOCUMENTS: './uploads/documents/'
   };
   

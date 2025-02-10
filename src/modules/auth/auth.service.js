@@ -14,7 +14,7 @@ const processImage = async (id, publicName, base64) => {
   if (!base64 || !publicName) return null;
 
   const privateName = `USER_${nanoid(20)}`;
-  const imagePath = path.join(PATHS.PROFILE_IMAGES, privateName);
+  const imagePath = path.join(PATHS.USER_IMAGES, privateName);
 
   try {
     await buildImage(privateName, 'user', base64);
