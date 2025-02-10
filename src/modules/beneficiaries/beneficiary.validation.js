@@ -48,6 +48,9 @@ const beneficiarySchema = Joi.object({
   city_id: Joi.number().optional().messages({
     'number.base': 'El ID de la ciudad debe ser un número',
   }),
+  department: Joi.number().optional().messages({
+    'number.base': 'El ID de la ciudad debe ser un número',
+  }),
   address: Joi.string().max(255).required().messages({
     'string.max': 'La dirección no puede tener más de 255 caracteres',
     'any.required': 'La dirección es obligatoria',

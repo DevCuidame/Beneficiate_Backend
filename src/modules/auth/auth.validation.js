@@ -46,11 +46,23 @@ const registerSchema = Joi.object({
     "number.base": "El ID de la ciudad debe ser un número",
     "string.empty": "La ciudad es obligatoria"
   }),
-  phone: Joi.string().min(10).max(80).required().messages({
+  department: Joi.number().optional().allow().messages({
+    "number.base": "El ID del departamento debe ser un número",
+    "string.empty": "El departamento es obligatoria"
+  }),
+  phone: Joi.string().min(10).max(10).required().messages({
     "string.min": "El teléfono debe tener al menos 10 caracteres",
     "string.max": "El teléfono no puede tener más de 80 caracteres",
     "any.required": "El teléfono es obligatorio",
     "string.empty": "El teléfono no puede estar vacío"
+  }),
+  birth_date: Joi.date().optional().messages({
+    'date.base': 'La fecha de nacimiento debe ser una fecha válida',
+  }),
+  gender: Joi.string().valid('M', 'F', 'Other').required().messages({
+    'any.only': 'El género debe ser Male, Female o Other',
+    'any.required': 'El género es obligatorio',
+    'string.empty': 'El género no puede estar vacío',
   }),
   email: Joi.string().email().required().messages({
     "string.email": "El correo debe ser válido",

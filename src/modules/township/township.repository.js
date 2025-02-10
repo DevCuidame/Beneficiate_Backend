@@ -14,7 +14,39 @@ const findLocationByTownshipId = async (township_id) => {
     [township_id]
   );
 
-  return result.rows; 
+  return result.rows;
 };
 
-module.exports = { findLocationByTownshipId };
+const findAllDepartments = async () => {
+  const result = await pool.query(
+    `SELECT 
+      id, 
+      name, 
+      code AS department_code 
+    FROM departments 
+    ORDER BY name ASC`
+  );
+  return result.rows;
+};
+
+const findTownshipsByDepartmentId = async (department_id) => {
+  const result = await pool.query(
+    `SELECT 
+      id, 
+      name, 
+      code AS township_code, 
+      department_id AS department_id
+    FROM townships 
+    WHERE department_id = $1
+    ORDER BY name ASC`,
+    [department_id]
+  );
+  return result.rows;
+};
+
+
+module.exports = {
+  findLocationByTownshipId,
+  findAllDepartments,
+  findTownshipsByDepartmentId,
+};

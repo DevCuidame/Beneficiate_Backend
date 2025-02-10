@@ -5,6 +5,7 @@ const path = require('path');
 const imageRepository = require('../images/beneficiary/beneficiary.images.repository');
 const townshipRepository = require('../township/township.repository');
 const PATHS = require('../../config/paths');
+const { formatDatesInData } = require('../../utils/date.util');
 
 const processImage = async (beneficiaryId, publicName, base64) => {
   const { nanoid } = await import('nanoid');
@@ -51,7 +52,7 @@ const getBeneficiariesByUser = async (user_id) => {
       const location = await townshipRepository.findLocationByTownshipId(beneficiary.city_id);
       const image = await imageRepository.getImagesByBeneficiary(beneficiary.id);
 
-      return { ...beneficiary, location, image };
+      return formatDatesInData({ ...beneficiary, location, image }, ['birth_date', 'created_at']);
     })
   );
 
