@@ -23,7 +23,7 @@ async function buildImage(dir, folder, base64) {
 
     const uploadPath = process.env.IMAGE_UPLOAD_PATH || "src/uploads";
     const directoryPath = path.join(uploadPath, folder);
-    const filePath = path.join(directoryPath, `${dir}.${extension}`);
+    const filePath = path.join(directoryPath, `${dir}`);
 
     // Verificar y crear carpeta si no existe
     await fs.promises.mkdir(directoryPath, { recursive: true });

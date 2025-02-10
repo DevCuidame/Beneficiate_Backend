@@ -14,7 +14,6 @@ const loginSchema = Joi.object({
 });
 
 
-
 const registerSchema = Joi.object({
   first_name: Joi.string().min(3).max(100).required().messages({
     "string.min": "El nombre debe tener al menos 3 caracteres",
@@ -70,6 +69,9 @@ const registerSchema = Joi.object({
   }),
   base_64: Joi.string().optional().messages({
     "string.base": "La imagen debe ser una cadena en formato Base64"
+  }),
+  privacy_policy: Joi.boolean().required().messages({
+    "boolean.base": "Por favor, acepta los términos y condiciones"
   })
 });
 

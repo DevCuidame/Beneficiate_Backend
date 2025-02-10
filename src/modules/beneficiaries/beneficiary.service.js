@@ -3,17 +3,19 @@ const { ValidationError, NotFoundError } = require('../../core/errors');
 const { buildImage } = require('../../utils/image.utils');
 const path = require('path');
 const imageRepository = require('../images/beneficiary/beneficiary.images.repository');
+const townshipRepository = require('../township/township.repository');
 const PATHS = require('../../config/paths');
 
 const processImage = async (beneficiaryId, publicName, base64) => {
+  const { nanoid } = await import('nanoid');
   if (!base64 || !publicName) return null;
 
   const extension = publicName.substring(publicName.lastIndexOf('.'));
-  const privateName = `USER_${nanoid(20)}${extension}`;
+  const privateName = `BENEFICIARY_${nanoid(20)}${extension}`;
   const imagePath = path.join(PATHS.PROFILE_IMAGES, privateName);
 
   try {
-    await buildImage(privateName, 'profile', base64);
+    await buildImage(privateName, 'beneficiary', base64);
     const imageData = {
       beneficiary_id: beneficiaryId,
       public_name: publicName,
@@ -37,16 +39,34 @@ const getBeneficiaryByIdentification = async (identification_number) => {
 };
 
 const getBeneficiariesByUser = async (user_id) => {
-  const beneficiaries = await beneficiaryRepository.findByUserId(user_id);
-  if (!beneficiaries.length) {
+  const result = await beneficiaryRepository.findByUserId(user_id);
+
+  if (!result.length) {
     return [];
   }
-  return beneficiaries;
+
+  // Agregar ubicación a cada beneficiario
+  const beneficiariesData = await Promise.all(
+    result.map(async (beneficiary) => {
+      const location = await townshipRepository.findLocationByTownshipId(beneficiary.city_id);
+      const image = await imageRepository.getImagesByBeneficiary(beneficiary.id);
+
+      return { ...beneficiary, location, image };
+    })
+  );
+
+  return beneficiariesData;
 };
 
 
 const createBeneficiary = async (beneficiaryData) => {
-  const { nanoid } = await import('nanoid');
+  // Contar beneficiarios del usuario
+  const beneficiaryCount = await beneficiaryRepository.countByUserId(beneficiaryData.user_id);
+
+  if (beneficiaryCount >= 5) {
+    throw new ValidationError('No puedes agregar más de 5 beneficiarios.');
+  }
+
   const existingBeneficiary = await beneficiaryRepository.findByIdentification(
     beneficiaryData.identification_number
   );
@@ -56,21 +76,21 @@ const createBeneficiary = async (beneficiaryData) => {
     );
   }
 
-  beneficiaryData.removed = false; // Removed by default
-  beneficiaryData.created_at = new Date(); // Set creation date
+  beneficiaryData.removed = false;
+  beneficiaryData.created_at = new Date();
 
-  // Crear beneficiario primero
-  const newBeneficiary = await beneficiaryRepository.createBeneficiary(
-    beneficiaryData
-  );
+  const newBeneficiary = await beneficiaryRepository.createBeneficiary(beneficiaryData);
 
-  // Procesar imagen si viene en base64
   if (beneficiaryData.base_64) {
     await processImage(newBeneficiary.id, beneficiaryData.public_name, beneficiaryData.base_64);
   }
 
-  return newBeneficiary;
+  const location = await townshipRepository.findLocationByTownshipId(newBeneficiary.city_id);
+  const image = await imageRepository.getImagesByBeneficiary(newBeneficiary.id);
+
+  return { ...newBeneficiary, location, image };
 };
+
 
 const updateBeneficiary = async (id, beneficiaryData) => {
   const beneficiary = await beneficiaryRepository.findByIdentification(

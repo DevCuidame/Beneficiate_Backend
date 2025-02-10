@@ -10,6 +10,12 @@ const findById = async (id) => {
   return result.rows[0];
 };
 
+const countByUserId = async (userId) => {
+  const result = await pool.query('SELECT COUNT(*) FROM beneficiaries WHERE user_id = $1', [userId]);
+  return parseInt(result.rows[0].count, 10);
+};
+
+
 const findByUserId = async (user_id) => {
   const result = await pool.query('SELECT * FROM beneficiaries WHERE user_id = $1 AND removed = FALSE', [user_id]);
   return result.rows;
@@ -61,4 +67,4 @@ const removeBeneficiary = async (id) => {
   return { message: 'Beneficiario Eliminado' };
 };
 
-module.exports = { findByIdentification, findByUserId, createBeneficiary, updateBeneficiary, removeBeneficiary, findById };
+module.exports = { findByIdentification, findByUserId, createBeneficiary, updateBeneficiary, removeBeneficiary, findById, countByUserId };

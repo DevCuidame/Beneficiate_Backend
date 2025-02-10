@@ -4,6 +4,7 @@ const morgan = require('morgan');
 require('dotenv').config();
 const routes = require('./src/routes');
 const { handleErrors } = require('./src/core/errors');
+const path = require('path');
 
 const app = express();
 
@@ -11,6 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
+
 
 // Routes
 app.use('/api/v1', routes);
@@ -25,4 +30,5 @@ app.use(handleErrors);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+
 });
