@@ -1,4 +1,4 @@
-# 🚀 Node.js Clean Architecture API with PostgreSQL
+# 🚀 Beneficiate
 
 ## 📌 Project Overview
 This project follows a clean architecture approach using Node.js and PostgreSQL, ensuring modularity, scalability, and maintainability.
