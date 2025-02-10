@@ -15,4 +15,6 @@ router.use('/beneficiary/image', authenticate, beneficiaryImageRoutes);
 router.use('/user/image', authenticate, userImageRoutes);
 router.use('/townships', townshipRoutes);
 
+// TODO: Import beneficiary health information routes 
+
 module.exports = router

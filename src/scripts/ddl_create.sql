@@ -208,6 +208,8 @@ CREATE TABLE IF NOT EXISTS beneficiary_images (
 
 
 
+
+
 CREATE TABLE IF NOT EXISTS public.beneficiary_health_conditions (
     id SERIAL PRIMARY KEY,
     beneficiary_id BIGINT REFERENCES beneficiaries(id) ON DELETE CASCADE,
