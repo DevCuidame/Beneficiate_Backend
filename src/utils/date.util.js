@@ -6,7 +6,7 @@ const { format } = require('date-fns');
  * @param {string} formatStr - El formato deseado (por defecto: 'yyyy-MM-dd HH:mm:ss').
  * @returns {string|null} - La fecha formateada o null si es inválida.
  */
-const formatDate = (date, formatStr = 'yyyy-MM-dd HH:mm:ss') => {
+const formatDate = (date, formatStr = 'yyyy-MM-dd') => {
   if (!date) return null; // Si la fecha es null o undefined, devolver null
 
   try {
