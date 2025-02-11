@@ -52,7 +52,7 @@ const registerSchema = Joi.object({
   }),
   phone: Joi.string().min(10).max(10).required().messages({
     "string.min": "El teléfono debe tener al menos 10 caracteres",
-    "string.max": "El teléfono no puede tener más de 80 caracteres",
+    "string.max": "El teléfono no puede tener más de 10 caracteres",
     "any.required": "El teléfono es obligatorio",
     "string.empty": "El teléfono no puede estar vacío"
   }),

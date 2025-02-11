@@ -56,12 +56,17 @@ const register = async (userData) => {
   userData.plan_id = 1;
 
   userData.password = await bcrypt.hash(userData.password, 10);
-  const newUser = authRepository.createUser(userData);
+  const newUser = await authRepository.createUser(userData);
+  console.log("🚀 ~ register ~ newUser:", newUser)
 
-  // Procesar imagen si viene en base64
+  if (!newUser || !newUser.id) {
+    throw new ValidationError('No logramos guardar tu imagen');
+  }
+
   if (userData.base_64) {
     await processImage(newUser.id, userData.public_name, userData.base_64);
   }
+
 
   return newUser;
 };
