@@ -1,4 +1,5 @@
 const pool = require('../../config/connection');
+const { formatDatesInData } = require('../../utils/date.util');
 
 const findByIdentification = async (identification_number) => {
   const result = await pool.query('SELECT * FROM beneficiaries WHERE identification_number = $1', [identification_number]);
@@ -20,6 +21,89 @@ const findByUserId = async (user_id) => {
   const result = await pool.query('SELECT * FROM beneficiaries WHERE user_id = $1 AND removed = FALSE', [user_id]);
   return result.rows;
 };
+
+// Metodo creado para obtener la informacion de la salud del beneficiario.
+
+const getBeneficiaryHealthData = async (beneficiary_id) => {
+  const query = `
+    SELECT 
+      COALESCE(hc.health_conditions, '[]') AS health_conditions,
+      COALESCE(a.allergies, '[]') AS allergies, 
+      COALESCE(d.diseases, '[]') AS diseases, 
+      COALESCE(fh.family_history, '[]') AS family_history, 
+      COALESCE(hm.medical_history, '[]') AS medical_history, 
+      COALESCE(m.medications, '[]') AS medications, 
+      COALESCE(v.vaccinations, '[]') AS vaccinations
+    FROM beneficiaries b
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'disability', disability,
+          'pregnant', pregnant,
+          'scars_description', scars_description,
+          'tattoos_description', tattoos_description,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
+      ) AS health_conditions
+      FROM beneficiary_health_conditions 
+      GROUP BY beneficiary_id
+    ) hc ON b.id = hc.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT('type', allergy_type, 'description', description, 'severity', severity)
+      ) AS allergies 
+      FROM beneficiary_allergies 
+      GROUP BY beneficiary_id
+    ) a ON b.id = a.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT('disease', disease, 'diagnosed_date', diagnosed_date, 'treatment_required', treatment_required)
+      ) AS diseases 
+      FROM beneficiary_diseases 
+      GROUP BY beneficiary_id
+    ) d ON b.id = d.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT('type', history_type, 'relationship', relationship, 'description', description)
+      ) AS family_history 
+      FROM beneficiary_family_history 
+      GROUP BY beneficiary_id
+    ) fh ON b.id = fh.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT('type', history_type, 'description', description, 'history_date', history_date)
+      ) AS medical_history 
+      FROM beneficiary_medical_history 
+      GROUP BY beneficiary_id
+    ) hm ON b.id = hm.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT('medication', medication, 'laboratory', laboratory, 'prescription', prescription, 'dosage', dosage, 'frequency', frequency)
+      ) AS medications 
+      FROM beneficiary_medications 
+      GROUP BY beneficiary_id
+    ) m ON b.id = m.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT('vaccine', vaccine, 'vaccination_date', vaccination_date)
+      ) AS vaccinations 
+      FROM beneficiary_vaccinations 
+      GROUP BY beneficiary_id
+    ) v ON b.id = v.beneficiary_id
+    WHERE b.id = $1;
+  `;
+
+  const { rows } = await pool.query(query, [beneficiary_id]);
+
+  if (!rows.length) return null; // Retorna null si no hay datos
+
+  // Aplicar formato a las fechas
+  return formatDatesInData(rows[0], [
+    'diagnosed_date', 'history_date', 'vaccination_date', 'created_at', 'updated_at'
+  ]);
+};
+
 
 const createBeneficiary = async (beneficiaryData) => {
   const {
@@ -67,4 +151,4 @@ const removeBeneficiary = async (id) => {
   return { message: 'Beneficiario Eliminado' };
 };
 
-module.exports = { findByIdentification, findByUserId, createBeneficiary, updateBeneficiary, removeBeneficiary, findById, countByUserId };
+module.exports = { findByIdentification, findByUserId, createBeneficiary, updateBeneficiary, removeBeneficiary, findById, countByUserId, getBeneficiaryHealthData };

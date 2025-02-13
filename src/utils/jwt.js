@@ -1,17 +1,20 @@
-// utils/jwt.js
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const generateToken = (payload, expiresIn = '1h') => {
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
+const generateAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' }); 
 };
 
-const verifyToken = (token) => {
+const generateRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' }); 
+};
+
+const verifyToken = (token, secret) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, secret);
   } catch (error) {
     return null;
   }
 };
 
-module.exports = { generateToken, verifyToken };
+module.exports = { generateAccessToken, generateRefreshToken, verifyToken };

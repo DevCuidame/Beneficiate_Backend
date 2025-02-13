@@ -3,6 +3,7 @@ const authService = require('./auth.service');
 const userService = require('../users/user.service');
 const beneficiaryService = require('../beneficiaries/beneficiary.service');
 const { successResponse, errorResponse } = require('../../core/responses');
+const { ValidationError } = require('../../core/errors');
 
 const login = async (req, res) => {
   try {
@@ -18,10 +19,25 @@ const login = async (req, res) => {
 
     successResponse(res, { token, user, beneficiaries }, 'Login exitoso');
   } catch (error) {
-    console.log("🚀 ~ login ~ error:", error)
     errorResponse(res, error);
   }
 };
+
+const refreshTokenController = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      throw new ValidationError('Refresh Token es obligatorio');
+    }
+
+    const newToken = await authService.refreshToken(refreshToken);
+    successResponse(res, newToken, 'Token renovado exitosamente');
+  } catch (error) {
+    console.log("🚀 ~ refreshTokenController ~ error:", error);
+    errorResponse(res, error);
+  }
+};
+
 
 
 const register = async (req, res) => {
@@ -33,4 +49,4 @@ const register = async (req, res) => {
   }
 };
 
-module.exports = { login, register };
+module.exports = { login, register, refreshTokenController };

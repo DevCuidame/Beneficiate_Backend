@@ -6,7 +6,6 @@ const { NotFoundError } = require('../../core/errors');
 
 const findByEmail = async (email) => {
   const user = await userRepository.findByEmail(email);
-  console.log("🚀 ~ findByEmail ~ user:", user.plan_id);
 
   if (!user) {
     throw new NotFoundError('Usuario no encontrado');

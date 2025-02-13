@@ -99,6 +99,16 @@ CREATE TABLE IF NOT EXISTS users (
     plan_id BIGINT REFERENCES plans(id) ON DELETE RESTRICT
 );
 
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    token TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (user_id)
+);
+
+
 CREATE TABLE IF NOT EXISTS public.beneficiaries (
     id SERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
@@ -207,16 +217,18 @@ CREATE TABLE IF NOT EXISTS beneficiary_images (
 );
 
 
-
-
-
-CREATE TABLE IF NOT EXISTS public.beneficiary_health_conditions (
+CREATE TABLE IF NOT EXISTS public.beneficiary_distinctives (
     id SERIAL PRIMARY KEY,
     beneficiary_id BIGINT REFERENCES beneficiaries(id) ON DELETE CASCADE,
-    disability VARCHAR(100),
-    pregnant VARCHAR(10),
-    scars_description VARCHAR(1000),
-    tattoos_description VARCHAR(1000),
+    description VARCHAR(1000),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.beneficiary_disabilities (
+    id SERIAL PRIMARY KEY,
+    beneficiary_id BIGINT REFERENCES beneficiaries(id) ON DELETE CASCADE,
+    name VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -247,6 +259,7 @@ CREATE TABLE IF NOT EXISTS public.beneficiary_family_history (
     history_type VARCHAR(50),
     relationship VARCHAR(100),
     description VARCHAR(1000),
+    history_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

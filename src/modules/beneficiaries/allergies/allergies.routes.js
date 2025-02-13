@@ -1,9 +1,12 @@
 const express = require('express');
-const createRoutes = require('../../gen/generic.routes');
-const controllers = require('./allergies.controller');
-
 const router = express.Router();
+const { getByBeneficiaryId, createRecord, updateRecord, removeRecord } = require('./allergies.controller');
+const validate = require('../../../middlewares/validate.middleware');
+const { beneficiaryAllergySchema } = require('./allergies.validation');
 
-router.use('/allergies', createRoutes(controllers.allergiesController));
+router.get('/beneficiary/:beneficiary_id', getByBeneficiaryId);
+router.post('/create', validate(beneficiaryAllergySchema), createRecord);
+router.put('/update/:id', validate(beneficiaryAllergySchema), updateRecord);
+router.delete('/remove/:id', removeRecord);
 
 module.exports = router;

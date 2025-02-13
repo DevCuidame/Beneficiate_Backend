@@ -7,6 +7,7 @@ const townshipRepository = require('../township/township.repository');
 const PATHS = require('../../config/paths');
 const { formatDatesInData } = require('../../utils/date.util');
 
+
 const processImage = async (beneficiaryId, publicName, base64) => {
   const { nanoid } = await import('nanoid');
   if (!base64 || !publicName) return null;
@@ -46,18 +47,28 @@ const getBeneficiariesByUser = async (user_id) => {
     return [];
   }
 
-  // Agregar ubicación a cada beneficiario
   const beneficiariesData = await Promise.all(
     result.map(async (beneficiary) => {
       const location = await townshipRepository.findLocationByTownshipId(beneficiary.city_id);
       const image = await imageRepository.getImagesByBeneficiary(beneficiary.id);
 
-      return formatDatesInData({ ...beneficiary, location, image }, ['birth_date', 'created_at']);
+      const healthData = await beneficiaryRepository.getBeneficiaryHealthData(beneficiary.id) || {};
+
+      return formatDatesInData(
+        { 
+          ...beneficiary, 
+          location, 
+          image,
+          ...healthData, 
+        }, 
+        ['birth_date', 'created_at', 'diagnosed_date', 'history_date', 'vaccination_date']
+      );
     })
   );
 
   return beneficiariesData;
 };
+
 
 
 const createBeneficiary = async (beneficiaryData) => {

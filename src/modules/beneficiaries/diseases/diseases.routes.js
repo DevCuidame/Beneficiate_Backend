@@ -1,9 +1,13 @@
 const express = require('express');
-const createRoutes = require('../../gen/generic.routes');
-const controllers = require('./diseases.controller');
-
 const router = express.Router();
+const { getByBeneficiaryId, createRecord, updateRecord, removeRecord } = require('./diseases.controller');
 
-router.use('/diseases', createRoutes(controllers.diseasesController));
+const validate = require('../../../middlewares/validate.middleware');
+const { beneficiaryDiseaseSchema } = require('./diseases.validation');
+
+router.get('/beneficiary/:beneficiary_id', getByBeneficiaryId);
+router.post('/create', validate(beneficiaryDiseaseSchema), createRecord);
+router.put('/update/:id', validate(beneficiaryDiseaseSchema), updateRecord);
+router.delete('/remove/:id', removeRecord);
 
 module.exports = router;

@@ -1,11 +1,12 @@
 // modules/auth/auth.routes.js
 const express = require('express');
 const router = express.Router();
-const { login, register } = require('./auth.controller');
+const { login, register, refreshTokenController } = require('./auth.controller');
 const validate = require('../../middlewares/validate.middleware');
 const { loginSchema, registerSchema } = require('./auth.validation');
 
 router.post('/login', validate(loginSchema), login);
 router.post('/register', validate(registerSchema), register);
+router.post('/refresh-token', refreshTokenController); 
 
 module.exports = router;

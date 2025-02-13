@@ -35,8 +35,36 @@ const login = async (email, password) => {
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new UnauthorizedError('Credenciales Inválidas');
   }
-  return jwt.generateToken({ id: user.id, email: user.email });
+
+  // Generar tokens
+  const accessToken = jwt.generateAccessToken({ id: user.id, email: user.email });
+  const refreshToken = jwt.generateRefreshToken({ id: user.id, email: user.email });
+
+  // Guardar el refresh token en la BD
+  await authRepository.saveRefreshToken(user.id, refreshToken);
+
+  return { accessToken, refreshToken };
 };
+
+
+const refreshToken = async (token) => {
+  const decoded = jwt.verifyToken(token, process.env.JWT_REFRESH_SECRET);
+  if (!decoded) {
+    throw new UnauthorizedError('Refresh Token inválido o expirado');
+  }
+
+  const validToken = await authRepository.findRefreshToken(decoded.id, token);
+  if (!validToken) {
+    throw new UnauthorizedError('Refresh Token no válido');
+  }
+
+  // Generar nuevo access token
+  const newAccessToken = jwt.generateAccessToken({ id: decoded.id, email: decoded.email });
+
+  return { accessToken: newAccessToken };
+};
+
+
 
 const register = async (userData) => {
   const existingUser = await authRepository.findByEmail(userData.email);
@@ -71,4 +99,4 @@ const register = async (userData) => {
   return newUser;
 };
 
-module.exports = { login, register };
+module.exports = { login, register, refreshToken };

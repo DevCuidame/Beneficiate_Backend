@@ -1,49 +1,43 @@
-// GenericRepository.js
 const pool = require('../../config/connection');
 
-class GenericRepository {
-  constructor(tableName) {
-    this.table = tableName;
-  }
+const createRecord = async (table, data) => {
+  const columns = Object.keys(data).join(', ');
+  const values = Object.values(data);
+  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
 
-  async findAll() {
-    const result = await pool.query(`SELECT * FROM ${this.table}`);
-    return result.rows;
-  }
+  const query = `INSERT INTO ${table} (${columns}, created_at, updated_at) VALUES (${placeholders}, NOW(), NOW()) RETURNING *`;
+  const result = await pool.query(query, values);
+  return result.rows[0];
+};
 
-  async findById(id) {
-    const result = await pool.query(`SELECT * FROM ${this.table} WHERE id = $1`, [id]);
-    return result.rows[0];
-  }
+const findById = async (table, id) => {
+  const result = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [id]);
+  return result.rows[0];
+};
 
-  async findByBeneficiary(id) {
-    const result = await pool.query(`SELECT * FROM ${this.table} WHERE beneficiary = $1`, [id]);
-    return result.rows[0];
-  }
+const findByBeneficiaryId = async (table, beneficiary_id) => {
+  const result = await pool.query(`SELECT * FROM ${table} WHERE beneficiary_id = $1`, [beneficiary_id]);
+  return result.rows;
+};
 
+const updateRecord = async (table, id, data) => {
+  const updates = Object.keys(data).map((key, i) => `${key} = $${i + 1}`).join(', ');
+  const values = Object.values(data);
 
-  async create(data) {
-    const keys = Object.keys(data).join(', ');
-    const values = Object.values(data);
-    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-    const query = `INSERT INTO ${this.table} (${keys}) VALUES (${placeholders}) RETURNING *`;
-    const result = await pool.query(query, values);
-    return result.rows[0];
-  }
+  const query = `UPDATE ${table} SET ${updates}, updated_at = NOW() WHERE id = $${values.length + 1} RETURNING *`;
+  const result = await pool.query(query, [...values, id]);
+  return result.rows[0];
+};
 
-  async update(id, data) {
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    const setQuery = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
-    const query = `UPDATE ${this.table} SET ${setQuery} WHERE id = $${keys.length + 1} RETURNING *`;
-    const result = await pool.query(query, [...values, id]);
-    return result.rows[0];
-  }
+const removeRecord = async (table, id) => {
+  await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+  return { message: 'Registro eliminado' };
+};
 
-  async delete(id) {
-    await pool.query(`DELETE FROM ${this.table} WHERE id = $1`, [id]);
-    return { message: 'Registro eliminado' };
-  }
-}
-
-module.exports = GenericRepository;
+module.exports = {
+  createRecord,
+  findById,
+  findByBeneficiaryId,
+  updateRecord,
+  removeRecord,
+};
