@@ -22,22 +22,28 @@ const createRecord = async (req, res) => {
     const beneficiaryId = vaccinations[0].beneficiary_id;
     const existingRecords = await service.getByBeneficiaryId('beneficiary_vaccinations', beneficiaryId);
 
-    const newVaccinationKeys = vaccinations.map(v => `${v.vaccine}-${v.vaccination_date}`);
+    const newVaccinationIds = vaccinations.map(v => v.id).filter(id => id !== undefined);
 
-    const recordsToDelete = existingRecords.filter(v => !newVaccinationKeys.includes(`${v.vaccine}-${v.vaccination_date}`));
+    const recordsToDelete = existingRecords.filter(v => !newVaccinationIds.includes(v.id));
     for (const record of recordsToDelete) {
-      await service.removeRecord('beneficiary_vaccinations', record.id );
+      await service.removeRecord('beneficiary_vaccinations', record.id);
     }
 
+    // Insertar nuevos registros
     for (const vaccination of vaccinations) {
-      const exists = existingRecords.some(v => v.vaccine === vaccination.vaccine && v.vaccination_date === vaccination.vaccination_date);
-
-      if (!exists) {
+      if (!vaccination.id) {
         await service.createRecord('beneficiary_vaccinations', vaccination);
       }
     }
 
-    successResponse(res, { message: 'Registros actualizados correctamente' });
+    // Obtener TODAS las vacunas actualizadas y ordenarlas por `vaccination_date`
+    const updatedVaccinations = await service.getByBeneficiaryIdOrdered('beneficiary_vaccinations', beneficiaryId, 'vaccination_date');
+
+    successResponse(res, { 
+      message: 'Registros actualizados correctamente', 
+      vaccinations: updatedVaccinations 
+    });
+
   } catch (error) {
     errorResponse(res, error);
   }

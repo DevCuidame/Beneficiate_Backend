@@ -26,7 +26,7 @@ const formatDate = (date, formatStr = 'yyyy-MM-dd') => {
  * @param {Array<string>} fields - Los campos que contienen fechas.
  * @returns {Array|Object} - El mismo objeto o array con las fechas formateadas.
  */
-const formatDatesInData = (data, fields = ['created_at', 'updated_at']) => {
+const formatDatesInData = (data, fields = ['created_at', 'updated_at', 'vaccination_date', 'diagnosed_date' ,'history_date']) => {
   if (Array.isArray(data)) {
     return data.map((item) => formatDatesInData(item, fields));
   } else if (typeof data === 'object' && data !== null) {

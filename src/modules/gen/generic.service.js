@@ -11,6 +11,11 @@ const getByBeneficiaryId = async (table, beneficiary_id) => {
   return records.length ? records.map(record => formatDatesInData(record, ['created_at', 'updated_at', 'vaccination_date'])) : [];
 };
 
+const getByBeneficiaryIdOrdered = async (table, beneficiary_id, columnDate) => {
+  const records = await repository.findByBeneficiaryId(table, beneficiary_id, columnDate);
+  return records.length ? records.map(record => formatDatesInData(record, ['created_at', 'updated_at', 'vaccination_date'])) : [];
+};
+
 const updateRecord = async (table, id, data) => {
   const existingRecord = await repository.findById(table, id);
   if (!existingRecord) {
@@ -32,4 +37,5 @@ module.exports = {
   getByBeneficiaryId,
   updateRecord,
   removeRecord,
+  getByBeneficiaryIdOrdered
 };

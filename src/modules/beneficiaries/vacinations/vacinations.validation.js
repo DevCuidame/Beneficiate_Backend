@@ -3,6 +3,10 @@ const Joi = require('joi');
 const beneficiaryVaccinationSchema = Joi.object({
   vaccinations: Joi.array().items(
     Joi.object({
+      id: Joi.number().optional().allow(null, '').messages({
+        'number.base': 'El ID de la vacuna debe ser un número',
+        'any.required': 'El ID de la vacuna o es obligatorio',
+      }),
       beneficiary_id: Joi.number().required().messages({
         'number.base': 'El ID del beneficiario debe ser un número',
         'any.required': 'El ID del beneficiario es obligatorio',

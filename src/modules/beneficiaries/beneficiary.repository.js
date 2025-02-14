@@ -27,9 +27,10 @@ const findByUserId = async (user_id) => {
 const getBeneficiaryHealthData = async (beneficiary_id) => {
   const query = `
     SELECT 
-      COALESCE(hc.health_conditions, '[]') AS health_conditions,
+      COALESCE(d.distinctives, '[]') AS distinctives,
+      COALESCE(di.disabilities, '[]') AS disabilities,
       COALESCE(a.allergies, '[]') AS allergies, 
-      COALESCE(d.diseases, '[]') AS diseases, 
+      COALESCE(dz.diseases, '[]') AS diseases, 
       COALESCE(fh.family_history, '[]') AS family_history, 
       COALESCE(hm.medical_history, '[]') AS medical_history, 
       COALESCE(m.medications, '[]') AS medications, 
@@ -38,55 +39,109 @@ const getBeneficiaryHealthData = async (beneficiary_id) => {
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
         JSON_BUILD_OBJECT(
-          'disability', disability,
-          'pregnant', pregnant,
-          'scars_description', scars_description,
-          'tattoos_description', tattoos_description,
+          'id', id,
+          'description', description,
           'created_at', created_at,
           'updated_at', updated_at
         )
-      ) AS health_conditions
-      FROM beneficiary_health_conditions 
+      ) AS distinctives
+      FROM beneficiary_distinctives 
       GROUP BY beneficiary_id
-    ) hc ON b.id = hc.beneficiary_id
+    ) d ON b.id = d.beneficiary_id
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
-        JSON_BUILD_OBJECT('type', allergy_type, 'description', description, 'severity', severity)
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'name', name,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
+      ) AS disabilities
+      FROM beneficiary_disabilities 
+      GROUP BY beneficiary_id
+    ) di ON b.id = di.beneficiary_id
+    LEFT JOIN (
+      SELECT beneficiary_id, JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'allergy_type', allergy_type,
+          'description', description,
+          'severity', severity,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
       ) AS allergies 
       FROM beneficiary_allergies 
       GROUP BY beneficiary_id
     ) a ON b.id = a.beneficiary_id
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
-        JSON_BUILD_OBJECT('disease', disease, 'diagnosed_date', diagnosed_date, 'treatment_required', treatment_required)
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'disease', disease,
+          'diagnosed_date', diagnosed_date,
+          'treatment_required', treatment_required,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
       ) AS diseases 
       FROM beneficiary_diseases 
       GROUP BY beneficiary_id
-    ) d ON b.id = d.beneficiary_id
+    ) dz ON b.id = dz.beneficiary_id
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
-        JSON_BUILD_OBJECT('type', history_type, 'relationship', relationship, 'description', description)
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'history_type', history_type,
+          'relationship', relationship,
+          'description', description,
+          'history_date', history_date,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
       ) AS family_history 
       FROM beneficiary_family_history 
       GROUP BY beneficiary_id
     ) fh ON b.id = fh.beneficiary_id
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
-        JSON_BUILD_OBJECT('type', history_type, 'description', description, 'history_date', history_date)
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'history_type', history_type,
+          'description', description,
+          'history_date', history_date,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
       ) AS medical_history 
       FROM beneficiary_medical_history 
       GROUP BY beneficiary_id
     ) hm ON b.id = hm.beneficiary_id
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
-        JSON_BUILD_OBJECT('medication', medication, 'laboratory', laboratory, 'prescription', prescription, 'dosage', dosage, 'frequency', frequency)
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'medication', medication,
+          'laboratory', laboratory,
+          'prescription', prescription,
+          'dosage', dosage,
+          'frequency', frequency,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
       ) AS medications 
       FROM beneficiary_medications 
       GROUP BY beneficiary_id
     ) m ON b.id = m.beneficiary_id
     LEFT JOIN (
       SELECT beneficiary_id, JSON_AGG(
-        JSON_BUILD_OBJECT('vaccine', vaccine, 'vaccination_date', vaccination_date)
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'vaccine', vaccine,
+          'vaccination_date', vaccination_date,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
       ) AS vaccinations 
       FROM beneficiary_vaccinations 
       GROUP BY beneficiary_id
@@ -96,13 +151,14 @@ const getBeneficiaryHealthData = async (beneficiary_id) => {
 
   const { rows } = await pool.query(query, [beneficiary_id]);
 
-  if (!rows.length) return null; // Retorna null si no hay datos
+  if (!rows.length) return null;
 
-  // Aplicar formato a las fechas
   return formatDatesInData(rows[0], [
     'diagnosed_date', 'history_date', 'vaccination_date', 'created_at', 'updated_at'
   ]);
 };
+
+
 
 
 const createBeneficiary = async (beneficiaryData) => {
