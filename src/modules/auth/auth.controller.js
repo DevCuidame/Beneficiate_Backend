@@ -1,6 +1,7 @@
 // modules/auth/auth.controller.js
 const authService = require('./auth.service');
 const userService = require('../users/user.service');
+const servicesService = require('../services/services.service');
 const beneficiaryService = require('../beneficiaries/beneficiary.service');
 const { successResponse, errorResponse } = require('../../core/responses');
 const { ValidationError } = require('../../core/errors');
@@ -16,8 +17,9 @@ const login = async (req, res) => {
 
     const user = await userService.findByEmail(email);
     const beneficiaries = await beneficiaryService.getBeneficiariesByUser(user.id)
+    const services = await servicesService.getAllServices();
 
-    successResponse(res, { token, user, beneficiaries }, 'Login exitoso');
+    successResponse(res, { token, user, beneficiaries, services }, 'Login exitoso');
   } catch (error) {
     errorResponse(res, error);
   }

@@ -33,6 +33,8 @@ const createBeneficiary = async (req, res) => {
 
 const updateBeneficiary = async (req, res) => {
   try {
+    if (req.body.department) delete req.body.department;
+
     const { id } = req.params;
     const updatedBeneficiary = await beneficiaryService.updateBeneficiary(id, req.body);
     successResponse(res, updatedBeneficiary, 'Beneficiario actualizado exitosamente');
@@ -40,6 +42,7 @@ const updateBeneficiary = async (req, res) => {
     errorResponse(res, error);
   }
 };
+
 
 const removeBeneficiary = async (req, res) => {
   try {

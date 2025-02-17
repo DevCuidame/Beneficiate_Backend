@@ -105,24 +105,43 @@ const createBeneficiary = async (beneficiaryData) => {
 
 
 const updateBeneficiary = async (id, beneficiaryData) => {
-  const beneficiary = await beneficiaryRepository.findByIdentification(
-    beneficiaryData.identification_number
-  );
+  const beneficiary = await beneficiaryRepository.findById(id);
   if (!beneficiary) {
     throw new NotFoundError('Beneficiario no encontrado');
   }
 
-  const existingBeneficiary = await beneficiaryRepository.findByIdentification(
-    beneficiaryData.identification_number
-  );
-  if (existingBeneficiary) {
-    throw new ValidationError(
-      'Parece que ya existe un beneficiario con el mismo documento'
-    );
+  if (beneficiaryData.identification_number) {
+    const existingBeneficiary = await beneficiaryRepository.findByIdentification(beneficiaryData.identification_number);
+  
+    if (existingBeneficiary && existingBeneficiary.id !== beneficiary.id) {
+      throw new ValidationError(
+        'Parece que ya existe un beneficiario con el mismo documento'
+      );
+    }
+  }
+  
+
+  const updatedBeneficiary = await beneficiaryRepository.updateBeneficiary(id, beneficiaryData);
+
+  if (beneficiaryData.base_64 && beneficiaryData.public_name) {
+    await processImage(updatedBeneficiary.id, beneficiaryData.public_name, beneficiaryData.base_64);
   }
 
-  return await beneficiaryRepository.updateBeneficiary(id, beneficiaryData);
+  const location = await townshipRepository.findLocationByTownshipId(updatedBeneficiary.city_id);
+  const image = await imageRepository.getImagesByBeneficiary(updatedBeneficiary.id);
+  const healthData = await beneficiaryRepository.getBeneficiaryHealthData(updatedBeneficiary.id) || {};
+
+  return formatDatesInData(
+    { 
+      ...updatedBeneficiary, 
+      location, 
+      image,
+      ...healthData, 
+    }, 
+    ['birth_date', 'created_at', 'diagnosed_date', 'history_date', 'vaccination_date']
+  );
 };
+
 
 const removeBeneficiary = async (id) => {
   const beneficiary = await beneficiaryRepository.findById(id);

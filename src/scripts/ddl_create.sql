@@ -109,6 +109,16 @@ CREATE TABLE refresh_tokens (
 );
 
 
+CREATE TABLE IF NOT EXISTS public.services (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    image_path VARCHAR(255) NOT NULL,
+    whatsapp_link VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
 CREATE TABLE IF NOT EXISTS public.beneficiaries (
     id SERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,

@@ -1,6 +1,10 @@
 const Joi = require('joi');
 
 const beneficiarySchema = Joi.object({
+  id: Joi.number().optional().allow('', null).messages({
+    'number.base': 'El ID del beneficiario debe ser un número',
+  }),
+
   user_id: Joi.number().optional().messages({
     'number.base': 'El ID del usuario es requerido',
   }),
@@ -76,12 +80,11 @@ const beneficiarySchema = Joi.object({
     'string.max': 'El seguro funerario no puede tener más de 50 caracteres',
   }),
   removed: Joi.boolean().default(false),
-  public_name: Joi.string().max(100).optional().messages({
+  public_name: Joi.string().max(100).optional().allow('').messages({
     'string.max': 'No has cargado una imagen',
   }),
-  private_name: Joi.string().max(100).optional().messages({
-  }),
-  base_64: Joi.string().optional().messages({
+  private_name: Joi.string().max(100).optional().messages({}),
+  base_64: Joi.string().optional().allow('').messages({
     'string.base': 'No has cargado una imagen',
   }),
 });

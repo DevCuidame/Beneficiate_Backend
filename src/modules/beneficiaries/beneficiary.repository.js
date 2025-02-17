@@ -183,24 +183,49 @@ const createBeneficiary = async (beneficiaryData) => {
 };
 
 const updateBeneficiary = async (id, beneficiaryData) => {
-  const {
-    first_name, last_name, identification_type, identification_number,
-    phone, birth_date, gender, city_id, address, blood_type,
-    health_provider, prepaid_health, work_risk_insurance, funeral_insurance
-  } = beneficiaryData;
-
   const result = await pool.query(
     `UPDATE beneficiaries SET 
-      first_name = $1, last_name = $2, identification_type = $3, identification_number = $4, 
-      phone = $5, birth_date = $6, gender = $7, city_id = $8, address = $9, blood_type = $10, 
-      health_provider = $11, prepaid_health = $12, work_risk_insurance = $13, funeral_insurance = $14
-    WHERE id = $15 RETURNING *`,
-    [first_name, last_name, identification_type, identification_number, phone, birth_date, gender, city_id,
-      address, blood_type, health_provider, prepaid_health, work_risk_insurance, funeral_insurance, id]
+      first_name = $1, 
+      last_name = $2, 
+      identification_type = $3, 
+      identification_number = $4, 
+      phone = $5, 
+      birth_date = $6, 
+      gender = $7, 
+      city_id = $8, 
+      address = $9, 
+      blood_type = $10, 
+      health_provider = $11, 
+      prepaid_health = $12, 
+      work_risk_insurance = $13, 
+      funeral_insurance = $14
+    WHERE id = $15 
+    RETURNING *`,
+    [
+      beneficiaryData.first_name,
+      beneficiaryData.last_name,
+      beneficiaryData.identification_type,
+      beneficiaryData.identification_number,
+      beneficiaryData.phone,
+      beneficiaryData.birth_date,
+      beneficiaryData.gender,
+      beneficiaryData.city_id,
+      beneficiaryData.address,
+      beneficiaryData.blood_type,
+      beneficiaryData.health_provider,
+      beneficiaryData.prepaid_health,
+      beneficiaryData.work_risk_insurance,
+      beneficiaryData.funeral_insurance,
+      id
+    ]
   );
 
   return result.rows[0];
 };
+
+module.exports = { updateBeneficiary };
+
+
 
 const removeBeneficiary = async (id) => {
   await pool.query('UPDATE beneficiaries SET removed = TRUE WHERE id = $1', [id]);
