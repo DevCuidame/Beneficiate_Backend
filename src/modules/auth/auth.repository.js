@@ -25,6 +25,7 @@ const createUser = async (userData) => {
 
 
 const saveRefreshToken = async (userId, token) => {
+  
   await pool.query(
     'INSERT INTO refresh_tokens (user_id, token) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET token = $2',
     [userId, token]
@@ -32,12 +33,15 @@ const saveRefreshToken = async (userId, token) => {
 };
 
 const findRefreshToken = async (userId, token) => {
+  console.log("🔍 Buscando refresh token en la base de datos:", userId, token);
   const result = await pool.query(
     'SELECT token FROM refresh_tokens WHERE user_id = $1 AND token = $2',
     [userId, token]
   );
+  console.log("🔍 Resultado de la consulta:", result.rowCount);
   return result.rowCount > 0;
 };
+
 
 
 module.exports = { findByEmail, createUser, findByIdentification, saveRefreshToken, findRefreshToken };

@@ -1208,6 +1208,12 @@ UPDATE departments SET name = 'Bogotá' WHERE id = 3;
 
 
 INSERT INTO public.plans (name, description, price, duration_days, max_beneficiaries, is_active, created_at)
-VALUES ('Básico', 'Acceso limitado a servicios', 9.99, 30, 2, true, CURRENT_TIMESTAMP),
-       ('Premium', 'Acceso completo a todos los servicios', 19.99, 30, 5, true, CURRENT_TIMESTAMP),
-       ('Plan Anual', 'Acceso completo por un año con descuento', 199.99, 365, 10, true, CURRENT_TIMESTAMP);
+VALUES ('Individual', 'Acceso limitado a servicios', 250.000, 365, 0, true, CURRENT_TIMESTAMP),
+       ('Familiar', 'Acceso completo a todos los servicios', 480.000, 365, 4, true, CURRENT_TIMESTAMP),
+
+
+INSERT INTO public.services (name, image_path, whatsapp_link)
+VALUES 
+    ('Consulta Médica', 'uploads/images/consultation.png', 'https://wa.me/123456789'),
+    ('Soporte Técnico', 'uploads/images/support.png', 'https://wa.me/987654321'),
+    ('Farmacia a Domicilio', 'uploads/images/pharmacy.png', 'https://wa.me/1122334455');

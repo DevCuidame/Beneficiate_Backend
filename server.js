@@ -13,7 +13,7 @@ app.use(cors({origin: '*'}));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
-app.use('/uploads', express.static('/home/alopez/uploads'));
+app.use('/uploads', express.static('/home/beneficiate/uploads'));
 app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 
 

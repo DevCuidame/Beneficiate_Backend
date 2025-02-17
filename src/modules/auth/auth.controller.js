@@ -35,7 +35,6 @@ const refreshTokenController = async (req, res) => {
     const newToken = await authService.refreshToken(refreshToken);
     successResponse(res, newToken, 'Token renovado exitosamente');
   } catch (error) {
-    console.log("🚀 ~ refreshTokenController ~ error:", error);
     errorResponse(res, error);
   }
 };

@@ -13,7 +13,8 @@ const processImage = async (id, publicName, base64) => {
 
   if (!base64 || !publicName) return null;
 
-  const privateName = `USER_${nanoid(20)}`;
+  const extension = publicName.substring(publicName.lastIndexOf('.'));
+  const privateName = `USER_${nanoid(20)}${extension}`;
   const imagePath = path.join(PATHS.USER_IMAGES, privateName);
 
   try {
@@ -48,21 +49,31 @@ const login = async (email, password) => {
 
 
 const refreshToken = async (token) => {
-  const decoded = jwt.verifyToken(token, process.env.JWT_REFRESH_SECRET);
-  if (!decoded) {
+  try {
+    console.log("🔑 Verificando token...");
+    const decoded = jwt.verifyToken(token, process.env.JWT_REFRESH_SECRET);
+    console.log("✅ Token decodificado:", decoded);
+
+    if (!decoded) {
+      throw new UnauthorizedError('Refresh Token inválido o expirado');
+    }
+
+    const validToken = await authRepository.findRefreshToken(decoded.id, token);
+    if (!validToken) {
+      throw new UnauthorizedError('Refresh Token no válido');
+    }
+
+    console.log("✔ Token válido, generando nuevo...");
+    
+    // Generar nuevo access token
+    const newAccessToken = jwt.generateToken({ id: decoded.id });
+    return { accessToken: newAccessToken, refreshToken: token }; 
+  } catch (error) {
+    console.log("❌ Error al verificar refresh token:", error.message);
     throw new UnauthorizedError('Refresh Token inválido o expirado');
   }
-
-  const validToken = await authRepository.findRefreshToken(decoded.id, token);
-  if (!validToken) {
-    throw new UnauthorizedError('Refresh Token no válido');
-  }
-
-  // Generar nuevo access token
-  const newAccessToken = jwt.generateAccessToken({ id: decoded.id, email: decoded.email });
-
-  return { accessToken: newAccessToken };
 };
+
 
 
 
@@ -85,7 +96,6 @@ const register = async (userData) => {
 
   userData.password = await bcrypt.hash(userData.password, 10);
   const newUser = await authRepository.createUser(userData);
-  console.log("🚀 ~ register ~ newUser:", newUser)
 
   if (!newUser || !newUser.id) {
     throw new ValidationError('No logramos guardar tu imagen');
