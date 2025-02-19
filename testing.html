@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cliente WebSocket</title>
+</head>
+<body>
+  <script>
+    // Reemplaza con tu token JWT válido
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiZW1haWwiOiJhbnRob0BleGFtcGxlLmNvbSIsImlhdCI6MTczOTk4OTQwMiwiZXhwIjoxNzQwMDc1ODAyfQ.YbzDWEcRtx_9hD93INunhpp6mLYmP26Msk28_qpIVhw';
+    // La URL del WebSocket; ajusta el host/puerto según corresponda
+    const wsUrl = 'ws://localhost:3000';
+
+    // Al pasar el token como segundo parámetro se enviará en el header 'sec-websocket-protocol'
+    const ws = new WebSocket(wsUrl, ["websocket", token]);
+
+
+
+    ws.onopen = () => {
+      console.log('Conectado al WebSocket');
+
+      // Ejemplo: enviar un mensaje al servidor
+      const message = {
+        chat_id: 4,
+        sender_id: 9,
+        sender_type: 'USER',
+        message: 'Hola, este es un mensaje de prueba'
+      };
+      ws.send(JSON.stringify(message));
+    };
+
+    ws.onmessage = (event) => {
+      console.log('Mensaje recibido del servidor:', event.data);
+      const data = JSON.parse(event.data);
+      console.log('Evento:', data.event);
+    };
+
+    ws.onerror = (error) => {
+      console.error('Error en WebSocket:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('La conexión WebSocket se ha cerrado');
+    };
+  </script>
+</body>
+</html>

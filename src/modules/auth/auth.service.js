@@ -8,7 +8,6 @@ const path = require('path');
 const imageRepository = require('../images/user/user.images.repository');
 const PATHS = require('../../config/paths');
 const emailService = require('../emails/email.service');
-const { v4: uuidv4 } = require('uuid');
 
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');

@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     verified BOOLEAN NOT NULL DEFAULT FALSE,
+    online_status BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     plan_id BIGINT NULL REFERENCES plans(id) ON DELETE SET NULL
 );
@@ -141,13 +142,45 @@ CREATE TABLE IF NOT EXISTS public.call_center_agents (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS public.call_center_chat (
+CREATE TABLE IF NOT EXISTS public.chats (
     id SERIAL PRIMARY KEY,
     sender_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     receiver_id BIGINT REFERENCES call_center_agents(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'CLOSED', 'PENDING')),
+    closed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    last_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_chats_sender ON chats(sender_id);
+CREATE INDEX idx_chats_receiver ON chats(receiver_id);
+
+CREATE TABLE IF NOT EXISTS public.messages (
+    id SERIAL PRIMARY KEY,
+    chat_id BIGINT REFERENCES chats(id) ON DELETE CASCADE,
+    sender_id BIGINT NOT NULL, 
+    sender_type VARCHAR(10) CHECK (sender_type IN ('USER', 'AGENT')),
     message TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_messages_chat ON messages(chat_id);
+
+-- TRIGGER para actualizar updated_at en chats cuando se inserte un nuevo mensaje
+CREATE OR REPLACE FUNCTION update_chat_timestamp() 
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE chats SET updated_at = CURRENT_TIMESTAMP, last_message = NEW.message WHERE id = NEW.chat_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER messages_after_insert
+AFTER INSERT ON messages
+FOR EACH ROW EXECUTE FUNCTION update_chat_timestamp();
+
+
 
 CREATE TABLE IF NOT EXISTS public.medical_appointments (
     id SERIAL PRIMARY KEY,

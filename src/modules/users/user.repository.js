@@ -29,7 +29,14 @@ const findByEmail = async (email) => {
 };
 
 
+const updateUserStatus = async (user_id, isOnline) => {
+  await pool.query(
+      'UPDATE users SET online_status = $1 WHERE id = $2',
+      [isOnline, user_id]
+  );
+};
 
 
 
-module.exports = { findByIdentification, findByEmail, getUserById };
+
+module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus};
