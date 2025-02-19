@@ -40,6 +40,39 @@ const getBeneficiaryByIdentification = async (identification_number) => {
   return beneficiary;
 };
 
+const getBeneficiaryByUserId = async (id, user_id) => {
+  const beneficiary = await beneficiaryRepository.getBeneficiaryByUserId(id, user_id);
+
+  if (!beneficiary) {
+    throw new NotFoundError('Beneficiario no encontrado');
+  }
+
+  return beneficiary;
+};
+
+const getBeneficiaryById = async (id) => {
+  const beneficiary = await beneficiaryRepository.findById(id);
+
+  if (!beneficiary) {
+    throw new NotFoundError('Beneficiario no encontrado');
+  }
+
+  return beneficiary;
+};
+
+
+
+const countUserBeneficiaries = async (user_id) => {
+  const beneficiaries = await beneficiaryRepository.countUserBeneficiaries(user_id);
+
+  if (!beneficiaries) {
+    throw new NotFoundError('Beneficiarios no encontrados');
+  }
+
+  return beneficiaries;
+};
+
+
 const getBeneficiariesByUser = async (user_id) => {
   const result = await beneficiaryRepository.findByUserId(user_id);
 
@@ -157,4 +190,7 @@ module.exports = {
   createBeneficiary,
   updateBeneficiary,
   removeBeneficiary,
+  getBeneficiaryByUserId,
+  countUserBeneficiaries,
+  getBeneficiaryById
 };

@@ -7,16 +7,13 @@ const getAllPlans = async () => {
 
 const getPlanById = async (plan_id) => {
   if (!plan_id) {
-    throw new ValidationError('El ID del plan es obligatorio');
+    return null; 
   }
 
   const plan = await planRepository.findPlanById(plan_id);
-  if (!plan) {
-    throw new ValidationError('No se encontró el plan');
-  }
-
-  return plan;
+  return plan || null; 
 };
+
 
 const createPlan = async (planData) => {
   return await planRepository.createPlan(planData);

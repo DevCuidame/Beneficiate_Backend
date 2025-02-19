@@ -13,11 +13,20 @@ const findByEmail = async (email) => {
 
   const plan = await planService.getPlanById(user.plan_id);
   const images = await imageService.getUserImages(user.id);
-  const image = images.length > 0 ? images[0] : null; 
+  const image = images.length > 0 ? images[0] : null;
   const location = await townshipService.getTownshipById(user.city_id);
 
   return { ...user, plan, image, location };
 };
 
+const getUserById = async (id) => {
+  const user = await userRepository.getUserById(id);
 
-module.exports = { findByEmail };
+  if (!user) {
+    throw new NotFoundError('Usuario no encontrado');
+  }
+
+  return user;
+};
+
+module.exports = { findByEmail, getUserById };

@@ -4,6 +4,7 @@ const beneficiaryRoutes = require('./modules/beneficiaries/beneficiary.routes');
 const beneficiaryImageRoutes = require('./modules/images/beneficiary/beneficiary.images.routes');
 const userImageRoutes = require('./modules/images/user/user.images.routes');
 const townshipRoutes = require('./modules/township/township.routes');
+const medicalAppointmentRoutes = require('./modules/appointment/appointment.routes');
 const authenticate = require('./middlewares/auth.middleware');
 
 const router = express.Router();
@@ -14,6 +15,8 @@ router.use('/beneficiary', authenticate, beneficiaryRoutes);
 router.use('/beneficiary/image', authenticate, beneficiaryImageRoutes);
 router.use('/user/image', authenticate, userImageRoutes);
 router.use('/townships', townshipRoutes);
+console.log("✅ Cargando rutas de citas médicas...");
+router.use('/medical-appointment', medicalAppointmentRoutes);
 
 
 module.exports = router;

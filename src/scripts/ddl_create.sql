@@ -10,7 +10,7 @@ END $$;
 -- Crear ENUM para status de citas médicas
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'appointment_status_enum') THEN
-        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED');
+        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED');
     END IF;
 END $$;
 
@@ -73,6 +73,7 @@ CREATE TABLE townships (
 CREATE TABLE IF NOT EXISTS plans (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
+    code VARCHAR(255) NOT NULL UNIQUE NOT NULL,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
     duration_days INT NOT NULL,
@@ -96,7 +97,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    plan_id BIGINT REFERENCES plans(id) ON DELETE RESTRICT
+    plan_id BIGINT NULL REFERENCES plans(id) ON DELETE SET NULL
 );
 
 CREATE TABLE refresh_tokens (
@@ -106,15 +107,6 @@ CREATE TABLE refresh_tokens (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (user_id)
-);
-
-
-CREATE TABLE IF NOT EXISTS public.services (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    image_path VARCHAR(255) NOT NULL,
-    whatsapp_link VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -160,10 +152,11 @@ CREATE TABLE IF NOT EXISTS public.call_center_chat (
 CREATE TABLE IF NOT EXISTS public.medical_appointments (
     id SERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    beneficiary_id BIGINT REFERENCES beneficiaries(id) ON DELETE SET NULL,
+    beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
     appointment_date TIMESTAMP NOT NULL,
     status appointment_status_enum DEFAULT 'PENDING',
     notes TEXT,
+    is_for_beneficiary BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

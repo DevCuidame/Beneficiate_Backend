@@ -9,7 +9,7 @@ const findByIdentification = async (identification_number) => {
   return result.rows[0];
 };
 
-const findById = async (id) => {
+const getUserById = async (id) => {
   const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
   return result.rows[0];
 };
@@ -30,4 +30,6 @@ const findByEmail = async (email) => {
 
 
 
-module.exports = { findByIdentification, findByEmail, findById };
+
+
+module.exports = { findByIdentification, findByEmail, getUserById };

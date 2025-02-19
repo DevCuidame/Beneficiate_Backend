@@ -2,23 +2,46 @@ const pool = require('../../config/connection');
 const { formatDatesInData } = require('../../utils/date.util');
 
 const findByIdentification = async (identification_number) => {
-  const result = await pool.query('SELECT * FROM beneficiaries WHERE identification_number = $1', [identification_number]);
+  const result = await pool.query(
+    'SELECT * FROM beneficiaries WHERE identification_number = $1',
+    [identification_number]
+  );
   return result.rows[0];
 };
 
 const findById = async (id) => {
-  const result = await pool.query('SELECT * FROM beneficiaries WHERE id = $1', [id]);
+  const result = await pool.query('SELECT * FROM beneficiaries WHERE id = $1', [
+    id,
+  ]);
   return result.rows[0];
 };
 
-const countByUserId = async (userId) => {
-  const result = await pool.query('SELECT COUNT(*) FROM beneficiaries WHERE user_id = $1', [userId]);
-  return parseInt(result.rows[0].count, 10);
+const getBeneficiaryByUserId = async (beneficiaryId, userId) => {
+  const query = 'SELECT id FROM beneficiaries WHERE id = $1 AND user_id = $2';
+  const result = await pool.query(query, [beneficiaryId, userId]);
+  return result.rows[0] || null;
 };
 
 
+const countUserBeneficiaries = async (userId) => {
+  const query = 'SELECT COUNT(*) AS count FROM beneficiaries WHERE user_id = $1';
+  const result = await pool.query(query, [userId]);
+  return parseInt(result.rows[0].count, 10);
+};
+
+const countByUserId = async (userId) => {
+  const result = await pool.query(
+    'SELECT COUNT(*) FROM beneficiaries WHERE user_id = $1',
+    [userId]
+  );
+  return parseInt(result.rows[0].count, 10);
+};
+
 const findByUserId = async (user_id) => {
-  const result = await pool.query('SELECT * FROM beneficiaries WHERE user_id = $1 AND removed = FALSE', [user_id]);
+  const result = await pool.query(
+    'SELECT * FROM beneficiaries WHERE user_id = $1 AND removed = FALSE',
+    [user_id]
+  );
   return result.rows;
 };
 
@@ -154,18 +177,33 @@ const getBeneficiaryHealthData = async (beneficiary_id) => {
   if (!rows.length) return null;
 
   return formatDatesInData(rows[0], [
-    'diagnosed_date', 'history_date', 'vaccination_date', 'created_at', 'updated_at'
+    'diagnosed_date',
+    'history_date',
+    'vaccination_date',
+    'created_at',
+    'updated_at',
   ]);
 };
 
-
-
-
 const createBeneficiary = async (beneficiaryData) => {
   const {
-    user_id, first_name, last_name, identification_type, identification_number,
-    phone, birth_date, gender, city_id, address, blood_type,
-    health_provider, prepaid_health, work_risk_insurance, funeral_insurance, removed, created_at
+    user_id,
+    first_name,
+    last_name,
+    identification_type,
+    identification_number,
+    phone,
+    birth_date,
+    gender,
+    city_id,
+    address,
+    blood_type,
+    health_provider,
+    prepaid_health,
+    work_risk_insurance,
+    funeral_insurance,
+    removed,
+    created_at,
   } = beneficiaryData;
 
   const result = await pool.query(
@@ -174,9 +212,25 @@ const createBeneficiary = async (beneficiaryData) => {
       phone, birth_date, gender, city_id, address, blood_type, 
       health_provider, prepaid_health, work_risk_insurance, funeral_insurance, removed, created_at
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
-    [user_id, first_name, last_name, identification_type, identification_number,
-      phone, birth_date, gender, city_id, address, blood_type,
-      health_provider, prepaid_health, work_risk_insurance, funeral_insurance, removed, created_at]
+    [
+      user_id,
+      first_name,
+      last_name,
+      identification_type,
+      identification_number,
+      phone,
+      birth_date,
+      gender,
+      city_id,
+      address,
+      blood_type,
+      health_provider,
+      prepaid_health,
+      work_risk_insurance,
+      funeral_insurance,
+      removed,
+      created_at,
+    ]
   );
 
   return result.rows[0];
@@ -216,7 +270,7 @@ const updateBeneficiary = async (id, beneficiaryData) => {
       beneficiaryData.prepaid_health,
       beneficiaryData.work_risk_insurance,
       beneficiaryData.funeral_insurance,
-      id
+      id,
     ]
   );
 
@@ -225,11 +279,22 @@ const updateBeneficiary = async (id, beneficiaryData) => {
 
 module.exports = { updateBeneficiary };
 
-
-
 const removeBeneficiary = async (id) => {
-  await pool.query('UPDATE beneficiaries SET removed = TRUE WHERE id = $1', [id]);
+  await pool.query('UPDATE beneficiaries SET removed = TRUE WHERE id = $1', [
+    id,
+  ]);
   return { message: 'Beneficiario Eliminado' };
 };
 
-module.exports = { findByIdentification, findByUserId, createBeneficiary, updateBeneficiary, removeBeneficiary, findById, countByUserId, getBeneficiaryHealthData };
+module.exports = {
+  findByIdentification,
+  findByUserId,
+  createBeneficiary,
+  updateBeneficiary,
+  removeBeneficiary,
+  findById,
+  countByUserId,
+  getBeneficiaryHealthData,
+  getBeneficiaryByUserId,
+  countUserBeneficiaries
+};

@@ -16,15 +16,26 @@ app.use(morgan('dev'));
 app.use('/uploads', express.static('/home/beneficiate/uploads'));
 app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 
-
 // Routes
+console.log("✅ Registrando rutas desde 'routes'...");
 app.use('/api/v1', routes);
+
+
+
 app.get('/', (req, res) => {
+  console.log("✅ La API está funcionando correctamente");
   res.json({ message: 'Server is running' });
 });
 
+
 // Error Handling Middleware
 app.use(handleErrors);
+
+// app.use((err, req, res, next) => {
+//   console.error("❌ Error capturado en middleware global:", err.stack);
+//   res.status(500).json({ error: err.message });
+// });
+
 
 // Start server
 const PORT = process.env.PORT || 3000;

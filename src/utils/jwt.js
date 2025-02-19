@@ -17,4 +17,13 @@ const verifyToken = (token, secret) => {
   }
 };
 
-module.exports = { generateAccessToken, generateRefreshToken, verifyToken };
+
+const generateVerificationToken = (user) => {
+  return jwt.generateToken(
+    { email: user.email },
+    process.env.JWT_VERIFICATION_SECRET,
+    '1h' // Expira en 1 hora
+  );
+};
+
+module.exports = { generateAccessToken, generateRefreshToken, verifyToken, generateVerificationToken };

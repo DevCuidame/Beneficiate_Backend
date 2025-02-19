@@ -7,6 +7,8 @@ const { buildImage } = require('../../utils/image.utils');
 const path = require('path');
 const imageRepository = require('../images/user/user.images.repository');
 const PATHS = require('../../config/paths');
+const emailService = require('../emails/email.service');
+const { v4: uuidv4 } = require('uuid');
 
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');
@@ -38,8 +40,14 @@ const login = async (email, password) => {
   }
 
   // Generar tokens
-  const accessToken = jwt.generateAccessToken({ id: user.id, email: user.email });
-  const refreshToken = jwt.generateRefreshToken({ id: user.id, email: user.email });
+  const accessToken = jwt.generateAccessToken({
+    id: user.id,
+    email: user.email,
+  });
+  const refreshToken = jwt.generateRefreshToken({
+    id: user.id,
+    email: user.email,
+  });
 
   // Guardar el refresh token en la BD
   await authRepository.saveRefreshToken(user.id, refreshToken);
@@ -47,35 +55,25 @@ const login = async (email, password) => {
   return { accessToken, refreshToken };
 };
 
-
 const refreshToken = async (token) => {
-  try {
-    console.log("🔑 Verificando token...");
-    const decoded = jwt.verifyToken(token, process.env.JWT_REFRESH_SECRET);
-    console.log("✅ Token decodificado:", decoded);
-
-    if (!decoded) {
-      throw new UnauthorizedError('Refresh Token inválido o expirado');
-    }
-
-    const validToken = await authRepository.findRefreshToken(decoded.id, token);
-    if (!validToken) {
-      throw new UnauthorizedError('Refresh Token no válido');
-    }
-
-    console.log("✔ Token válido, generando nuevo...");
-    
-    // Generar nuevo access token
-    const newAccessToken = jwt.generateToken({ id: decoded.id });
-    return { accessToken: newAccessToken, refreshToken: token }; 
-  } catch (error) {
-    console.log("❌ Error al verificar refresh token:", error.message);
+  const decoded = jwt.verifyToken(token, process.env.JWT_REFRESH_SECRET);
+  if (!decoded) {
     throw new UnauthorizedError('Refresh Token inválido o expirado');
   }
+
+  const validToken = await authRepository.findRefreshToken(decoded.id, token);
+  if (!validToken) {
+    throw new UnauthorizedError('Refresh Token no válido');
+  }
+
+  // Generar nuevo access token
+  const newAccessToken = jwt.generateAccessToken({
+    id: decoded.id,
+    email: decoded.email,
+  });
+
+  return { accessToken: newAccessToken };
 };
-
-
-
 
 const register = async (userData) => {
   const existingUser = await authRepository.findByEmail(userData.email);
@@ -92,10 +90,12 @@ const register = async (userData) => {
     );
   }
   userData.verified = false;
-  userData.plan_id = 1;
 
   userData.password = await bcrypt.hash(userData.password, 10);
   const newUser = await authRepository.createUser(userData);
+
+  const verificationToken = jwt.generateVerificationToken(newUser);
+  await emailService.sendVerificationEmail(newUser, verificationToken);
 
   if (!newUser || !newUser.id) {
     throw new ValidationError('No logramos guardar tu imagen');
@@ -105,8 +105,23 @@ const register = async (userData) => {
     await processImage(newUser.id, userData.public_name, userData.base_64);
   }
 
-
   return newUser;
 };
 
-module.exports = { login, register, refreshToken };
+const verifyEmail = async (token) => {
+  try {
+    const decoded = jwt.verifyToken(token, process.env.JWT_VERIFICATION_SECRET);
+    const user = await userRepository.findByEmail(decoded.email);
+
+    if (!user) throw new ValidationError('Usuario no encontrado.');
+    if (user.verified) throw new ValidationError('El correo ya ha sido verificado.');
+
+    await authRepository.verifyUser(decoded.email);
+    return { message: 'Correo verificado exitosamente.' };
+  } catch (error) {
+    throw new ValidationError('Token inválido o expirado.');
+  }
+};
+
+
+module.exports = { login, register, refreshToken, verifyEmail };

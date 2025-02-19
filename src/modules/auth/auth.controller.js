@@ -21,6 +21,7 @@ const login = async (req, res) => {
 
     successResponse(res, { token, user, beneficiaries, services }, 'Login exitoso');
   } catch (error) {
+    console.log("🚀 ~ login ~ error:", error)
     errorResponse(res, error);
   }
 };
@@ -50,4 +51,14 @@ const register = async (req, res) => {
   }
 };
 
-module.exports = { login, register, refreshTokenController };
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const response = await authService.verifyEmail(token);
+    successResponse(res, response, 'Correo verificado exitosamente.');
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
+module.exports = { login, register, refreshTokenController, verifyEmail };
