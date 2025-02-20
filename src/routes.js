@@ -6,6 +6,7 @@ const userImageRoutes = require('./modules/images/user/user.images.routes');
 const townshipRoutes = require('./modules/township/township.routes');
 const medicalAppointmentRoutes = require('./modules/appointment/appointment.routes');
 const chatRoutes = require('./modules/chat/chat.routes');
+const medicalProfessionalsRoutes = require('./modules/medical_professionals/medicalProfessional.routes');
 const authenticate = require('./middlewares/auth.middleware');
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.use('/user/image', authenticate, userImageRoutes);
 router.use('/townships', townshipRoutes);
 router.use('/medical-appointment', medicalAppointmentRoutes);
 router.use('/chat', authenticate, chatRoutes);
+router.use('/medical-professionals', medicalProfessionalsRoutes);
 
 
 module.exports = router;

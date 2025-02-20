@@ -12,19 +12,16 @@ const initializeWebSocket = (server) => {
   server.on('upgrade', async (request, socket, head) => {
     let token = request.headers['sec-websocket-protocol'];
     
-    console.log("🔍 Token recibido en WebSocket:", token); // <-- Agregar esto
     
     if (!token) {
-        console.log("❌ No se recibió token en el header");
         socket.destroy();
         return;
     }
 
-    token = token.split(', ')[1] || token; // Eliminar prefijo "websocket, "
+    token = token.split(', ')[1] || token;
 
     try {
         const user = jwt.verifyToken(token, process.env.JWT_SECRET);
-        console.log("✅ Usuario autenticado:", user);
         request.user = user;
 
         wss.handleUpgrade(request, socket, head, (ws) => {
@@ -33,13 +30,11 @@ const initializeWebSocket = (server) => {
         });
 
     } catch (error) {
-        console.error("❌ Error en autenticación WebSocket:", error);
         socket.destroy();
     }
 });
 
 
-  // Ahora `wss` solo maneja conexiones sin `handleUpgrade()`
   wss.on('connection', async (ws, req) => {
     if (!req.user) {
       ws.close();
@@ -52,7 +47,6 @@ const initializeWebSocket = (server) => {
       clients.set(user.id, ws);
       onlineUsers.add(user.id);
       await userRepository.updateUserStatus(user.id, true);
-      console.log(`✅ Cliente ${user.id} conectado`);
 
       notifyUserConnection(user.id);
       broadcastOnlineUsers();

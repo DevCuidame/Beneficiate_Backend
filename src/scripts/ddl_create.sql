@@ -53,6 +53,65 @@ DO $$ BEGIN
 END $$;
 
 
+-- NEW TABLES
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'consultation_mode_enum') THEN
+        CREATE TYPE consultation_mode_enum AS ENUM ('PRESENCIAL', 'VIRTUAL', 'DOMICILIARIA');
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'professional_document_type_enum') THEN
+        CREATE TYPE professional_document_type_enum AS ENUM (
+            'ID_COPY',                
+            'PROFESSIONAL_CARD',      
+            'STUDIES_CERTIFICATE',    
+            'MEDICAL_RECORD',         -- Registro de la consulta médica (si aplica)
+            'RUT',                    -- Registro Único Tributario
+            'BANK_CERTIFICATION'      -- Certificación bancaria para pagos
+        );
+    END IF;
+END $$;
+
+
+CREATE TABLE IF NOT EXISTS medical_professionals (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,  
+    
+    nationality VARCHAR(100),
+    
+    -- Información profesional
+    profession VARCHAR(255) NOT NULL,           -- Profesión (ej. Médico)
+    specialty VARCHAR(255) NOT NULL,            -- Especialidad médica
+    medical_registration VARCHAR(255),          -- Número de registro médico 
+    professional_card_number VARCHAR(255),      -- Número de tarjeta profesional
+    university VARCHAR(255),                    -- Universidad de graduación
+    graduation_year INT,                        -- Año de graduación
+    additional_certifications TEXT,             -- Cursos, certificaciones o especializaciones adicionales
+    years_experience INT,                       -- Años de experiencia profesional
+    
+    -- Información de atención
+    consultation_address VARCHAR(255),          -- Dirección del consultorio o centro médico
+    institution_name VARCHAR(255),              -- Nombre de la institución o clínica (si aplica)
+    attention_township_id BIGINT REFERENCES townships(id) ON DELETE SET NULL,  -- Ciudad de atención (a través de "townships")
+    consultation_schedule TEXT,                 -- Horarios de consulta (se puede almacenar como texto o JSON)
+    consultation_modes consultation_mode_enum[] NOT NULL,  -- Modalidades de atención (pueden ser varias)
+    weekly_availability VARCHAR(255),           -- Disponibilidad semanal (ej. "Lunes a Viernes 8:00-17:00")
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS professional_documents (
+    id SERIAL PRIMARY KEY,
+    professional_id INT REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    document_type professional_document_type_enum NOT NULL, 
+    document_path VARCHAR(255) NOT NULL,               
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
 CREATE TABLE departments (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -161,6 +220,8 @@ CREATE TABLE IF NOT EXISTS public.messages (
     chat_id BIGINT REFERENCES chats(id) ON DELETE CASCADE,
     sender_id BIGINT NOT NULL, 
     sender_type VARCHAR(10) CHECK (sender_type IN ('USER', 'AGENT')),
+    message_type VARCHAR(10) CHECK (message_type IN ('SENT', 'RECEIVED')),
+    status VARCHAR(10) CHECK (status IN ('READ', 'DELIVERED', 'FAILED')),
     message TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

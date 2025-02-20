@@ -25,10 +25,8 @@ async function buildImage(dir, folder, base64) {
     const directoryPath = path.join(uploadPath, folder);
     const filePath = path.join(directoryPath, `${dir}`);
 
-    // Verificar y crear carpeta si no existe
     await fs.promises.mkdir(directoryPath, { recursive: true });
 
-    // Guardar la imagen
     await fs.promises.writeFile(filePath, buffer);
 
     return filePath;
@@ -39,7 +37,7 @@ async function buildImage(dir, folder, base64) {
 
 async function deleteImage(filePath) {
   try {
-    await fs.promises.access(filePath); // Verifica si existe antes de eliminar
+    await fs.promises.access(filePath); 
     await fs.promises.unlink(filePath);
   } catch (error) {
     throw new Error("Error al eliminar la imagen: " + error.message);
