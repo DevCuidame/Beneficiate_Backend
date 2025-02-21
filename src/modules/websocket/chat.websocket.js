@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const chatService = require('../chat/chat.service');
 const jwt = require('../../utils/jwt');
 const userRepository = require('../users/user.repository');
+const chatbotFlow = require('./chatbotFlow');
 
 const clients = new Map();
 const onlineUsers = new Set();
@@ -11,36 +12,28 @@ const initializeWebSocket = (server) => {
 
   server.on('upgrade', async (request, socket, head) => {
     let token = request.headers['sec-websocket-protocol'];
-    
-    
     if (!token) {
-        socket.destroy();
-        return;
+      socket.destroy();
+      return;
     }
-
     token = token.split(', ')[1] || token;
-
     try {
-        const user = jwt.verifyToken(token, process.env.JWT_SECRET);
-        request.user = user;
-
-        wss.handleUpgrade(request, socket, head, (ws) => {
-            ws.user = user;
-            wss.emit('connection', ws, request);
-        });
-
+      const user = jwt.verifyToken(token, process.env.JWT_SECRET);
+      request.user = user;
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        ws.user = user;
+        wss.emit('connection', ws, request);
+      });
     } catch (error) {
-        socket.destroy();
+      socket.destroy();
     }
-});
-
+  });
 
   wss.on('connection', async (ws, req) => {
     if (!req.user) {
       ws.close();
       return;
     }
-
     try {
       const user = req.user;
       ws.user = user;
@@ -50,6 +43,16 @@ const initializeWebSocket = (server) => {
 
       notifyUserConnection(user.id);
       broadcastOnlineUsers();
+
+      ws.botState = chatbotFlow.STATES.AWAITING_DOCUMENT;
+      const welcomeMsg = {
+        event: 'chatbot_message',
+        message: 'Hola, bienvenido al chat de agendamiento de citas. Para iniciar, por favor digite su documento de identidad sin espacios ni puntos.',
+        sender_type: 'BOT',
+      };
+      ws.send(JSON.stringify(welcomeMsg));
+      console.log(`Chatbot response sent: ${welcomeMsg.message}`);
+      
     } catch (error) {
       ws.close();
       return;
@@ -57,20 +60,27 @@ const initializeWebSocket = (server) => {
 
     ws.on('message', async (message) => {
       const data = JSON.parse(message);
+
+      // Procesa eventos tradicionales (typing, message_read, etc.)
       if (data.event === 'typing') {
         notifyTyping(data.chat_id, data.user_id);
       } else if (data.event === 'stop_typing') {
         notifyStopTyping(data.chat_id, data.user_id);
       } else if (data.event === 'message_read') {
         await handleMessageRead(data.chat_id, data.user_id, data.message_id);
-      } else {
-        await handleMessage(ws, data);
+      }
+      // Si el mensaje no tiene un "event" definido, se asume que forma parte del flujo del chatbot.
+      else {
+        if (ws.botState) {
+          await chatbotFlow.handleChatbotFlow(ws, data);
+        } else {
+          await handleMessage(ws, data);
+        }
       }
     });
 
     ws.on('close', async () => {
       if (!ws.user) return;
-      console.log(`❌ Cliente ${ws.user.id} desconectado`);
       clients.delete(ws.user.id);
       onlineUsers.delete(ws.user.id);
       await userRepository.updateUserStatus(ws.user.id, false);
@@ -85,19 +95,16 @@ const initializeWebSocket = (server) => {
 const handleMessage = async (ws, data) => {
   try {
     if (!data.chat_id || !data.sender_id || !data.message) {
-      ws.send(
-        JSON.stringify({ error: 'Datos incompletos para enviar el mensaje' })
-      );
+      ws.send(JSON.stringify({ error: 'Datos incompletos para enviar el mensaje' }));
       return;
     }
-
     const savedMessage = await chatService.sendMessage(
       data.chat_id,
       data.sender_id,
       data.sender_type,
-      data.message
+      data.message,
+      data.status
     );
-
     broadcastMessage(data.chat_id, savedMessage);
     notifyNewMessage(data.chat_id, savedMessage);
   } catch (error) {
@@ -113,7 +120,6 @@ const handleMessageRead = async (chat_id, user_id, message_id) => {
 
 const notifyUserStatusChange = async (user_id, status) => {
   if (!user_id) return;
-
   const chatParticipants = await chatService.fetchUserChatParticipants(user_id);
   chatParticipants.forEach((participant_id) => {
     const client = clients.get(participant_id);
@@ -124,13 +130,12 @@ const notifyUserStatusChange = async (user_id, status) => {
 };
 
 const notifyNewMessage = (chat_id, message) => {
-    clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ event: 'new_message', chat_id, message }));
-        }
-    });
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ event: 'new_message', chat_id, message }));
+    }
+  });
 };
-
 
 const broadcastMessage = async (chat_id, message) => {
   const chatParticipants = await chatService.fetchChatParticipants(chat_id);
@@ -161,9 +166,7 @@ const notifyStopTyping = (chat_id, user_id) => {
 const notifyMessageRead = (chat_id, user_id, message_id) => {
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({ event: 'message_read', chat_id, user_id, message_id })
-      );
+      client.send(JSON.stringify({ event: 'message_read', chat_id, user_id, message_id }));
     }
   });
 };
@@ -188,9 +191,7 @@ const broadcastOnlineUsers = () => {
   const onlineUserList = Array.from(onlineUsers);
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({ event: 'online_users', users: onlineUserList })
-      );
+      client.send(JSON.stringify({ event: 'online_users', users: onlineUserList }));
     }
   });
 };

@@ -1,8 +1,8 @@
 // services/chat.service.js
 const chatRepository = require('./chat.repository');
 
-const sendMessage = async (chat_id, sender_id, sender_type, message) => {
-    return await chatRepository.createMessage(chat_id, sender_id, sender_type, message);
+const sendMessage = async (chat_id, sender_id, sender_type, message, status) => {
+    return await chatRepository.createMessage(chat_id, sender_id, sender_type, message, status);
 };
 
 const fetchChatMessages = async (chat_id) => {

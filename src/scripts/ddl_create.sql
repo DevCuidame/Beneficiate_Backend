@@ -77,7 +77,7 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS medical_professionals (
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,  
+    user_id INT REFERENCES users(id) ON DELETE CASCADE, -- 
     
     nationality VARCHAR(100),
     
@@ -94,8 +94,8 @@ CREATE TABLE IF NOT EXISTS medical_professionals (
     -- Información de atención
     consultation_address VARCHAR(255),          -- Dirección del consultorio o centro médico
     institution_name VARCHAR(255),              -- Nombre de la institución o clínica (si aplica)
-    attention_township_id BIGINT REFERENCES townships(id) ON DELETE SET NULL,  -- Ciudad de atención (a través de "townships")
-    consultation_schedule TEXT,                 -- Horarios de consulta (se puede almacenar como texto o JSON)
+    attention_township_id BIGINT REFERENCES townships(id) ON DELETE SET NULL,  -- Ciudad de atención
+    consultation_schedule TEXT,                 -- Horarios de consulta 
     consultation_modes consultation_mode_enum[] NOT NULL,  -- Modalidades de atención (pueden ser varias)
     weekly_availability VARCHAR(255),           -- Disponibilidad semanal (ej. "Lunes a Viernes 8:00-17:00")
     
@@ -110,6 +110,18 @@ CREATE TABLE IF NOT EXISTS professional_documents (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+-- TABLA PARA IMÁGENES DEL PROFESIONAL
+
+CREATE TABLE IF NOT EXISTS professional_images (
+    id SERIAL PRIMARY KEY,
+    professional_id INT REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    public_name VARCHAR(100),
+    private_name VARCHAR(100),
+    profile_path VARCHAR(100),
+    header_path VARCHAR(100),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 
 CREATE TABLE departments (
@@ -220,7 +232,6 @@ CREATE TABLE IF NOT EXISTS public.messages (
     chat_id BIGINT REFERENCES chats(id) ON DELETE CASCADE,
     sender_id BIGINT NOT NULL, 
     sender_type VARCHAR(10) CHECK (sender_type IN ('USER', 'AGENT')),
-    message_type VARCHAR(10) CHECK (message_type IN ('SENT', 'RECEIVED')),
     status VARCHAR(10) CHECK (status IN ('READ', 'DELIVERED', 'FAILED')),
     message TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
