@@ -1212,8 +1212,9 @@ VALUES ('Individual', 'INDIVIDUAL-UNIQUE-X9Y7Z', 'Acceso limitado a servicios', 
        ('Familiar', 'FAMILY-UNIQUE-A1B2C3', 'Acceso completo a todos los servicios', 480.000, 365, 4, true, CURRENT_TIMESTAMP),
 
 
-INSERT INTO public.services (name, image_path, whatsapp_link)
+INSERT INTO medical_specialties (name, description)
 VALUES 
-    ('Consulta Médica', 'uploads/images/consultation.png', 'https://wa.me/123456789'),
-    ('Soporte Técnico', 'uploads/images/support.png', 'https://wa.me/987654321'),
-    ('Farmacia a Domicilio', 'uploads/images/pharmacy.png', 'https://wa.me/1122334455');
+  ('Cardiología', 'Especialista en el corazón y sistema cardiovascular'),
+  ('Pediatría', 'Especialista en el cuidado de niños y adolescentes'),
+  ('Dermatología', 'Especialista en la piel'),
+  ('Neumología', 'Especialista en el sistema respiratorio');

@@ -12,10 +12,6 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-pool.on('connect', () => {
-  console.log('🟢 Connected to PostgreSQL');
-});
-
 pool.on('error', (err) => {
   console.error('🔴 PostgreSQL connection error:', err);
 });

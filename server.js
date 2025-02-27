@@ -5,11 +5,12 @@ require('dotenv').config();
 const routes = require('./src/routes');
 const { handleErrors } = require('./src/core/errors');
 const path = require('path');
+require('./src/modules/appointment/expireAppointments.job');
 
 const http = require('http');
 const {
   initializeWebSocket,
-} = require('./src/modules/websocket/chat.websocket'); // Ajusta la ruta según tu estructura
+} = require('./src/modules/websocket/websocket');
 
 const app = express();
 
@@ -37,7 +38,6 @@ app.get('/', (req, res) => {
 // Error Handling Middleware
 app.use(handleErrors);
 
-// Iniciar el servidor usando el objeto "server" para que los WebSockets funcionen correctamente
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

@@ -1,9 +1,15 @@
 const appointmentService = require('./appointment.service');
 const { successResponse, errorResponse } = require('../../core/responses');
+const { broadcastAppointment } = require('../../modules/websocket/websocket');
+
 
 const createAppointment = async (req, res) => {
   try {
     const appointment = await appointmentService.createAppointment(req.body);
+
+    if (appointment) {
+      broadcastAppointment(appointment);
+    }
     successResponse(res, appointment, 'Cita creada exitosamente');
   } catch (error) {
     errorResponse(res, error);

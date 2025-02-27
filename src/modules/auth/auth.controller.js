@@ -1,6 +1,7 @@
 // modules/auth/auth.controller.js
 const authService = require('./auth.service');
 const userService = require('../users/user.service');
+const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
 const beneficiaryService = require('../beneficiaries/beneficiary.service');
 const { successResponse, errorResponse } = require('../../core/responses');
 const { ValidationError } = require('../../core/errors');
@@ -15,13 +16,30 @@ const login = async (req, res) => {
     }
 
     const user = await userService.findByEmail(email);
-    const beneficiaries = await beneficiaryService.getBeneficiariesByUser(user.id)
+    const beneficiaries = await beneficiaryService.getBeneficiariesByUser(user.id);
+
+    let isAgent = false;
+    let agentActive = false;
+    try {
+      const agent = await callCenterAgentService.getCallCenterAgentByUserId(user.id);
+      if (agent) {
+        isAgent = true;
+        agentActive = (agent.status === 'ACTIVE');
+      }
+    } catch (error) {
+      isAgent = false;
+      agentActive = false;
+    }
+
+    user.isAgent = isAgent;
+    user.agentActive = agentActive;
 
     successResponse(res, { token, user, beneficiaries }, 'Login exitoso');
   } catch (error) {
     errorResponse(res, error);
   }
 };
+
 
 const refreshTokenController = async (req, res) => {
   try {x

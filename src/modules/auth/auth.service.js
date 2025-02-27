@@ -9,6 +9,9 @@ const imageRepository = require('../images/user/user.images.repository');
 const PATHS = require('../../config/paths');
 const emailService = require('../emails/email.service');
 
+const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
+
+
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');
 
@@ -38,10 +41,27 @@ const login = async (email, password) => {
     throw new UnauthorizedError('Credenciales Inválidas');
   }
 
+  let isAgent = false;
+  let agentActive = false;
+  try {
+    const agent = await callCenterAgentService.getCallCenterAgentByUserId(
+      user.id
+    );
+    if (agent) {
+      isAgent = true;
+      agentActive = agent.status === 'ACTIVE';
+    }
+  } catch (error) {
+    isAgent = false;
+    agentActive = false;
+  }
+
   // Generar tokens
   const accessToken = jwt.generateAccessToken({
     id: user.id,
     email: user.email,
+    isAgent: isAgent,
+    agentActive: agentActive,
   });
   const refreshToken = jwt.generateRefreshToken({
     id: user.id,
@@ -113,7 +133,8 @@ const verifyEmail = async (token) => {
     const user = await userRepository.findByEmail(decoded.email);
 
     if (!user) throw new ValidationError('Usuario no encontrado.');
-    if (user.verified) throw new ValidationError('El correo ya ha sido verificado.');
+    if (user.verified)
+      throw new ValidationError('El correo ya ha sido verificado.');
 
     await authRepository.verifyUser(decoded.email);
     return { message: 'Correo verificado exitosamente.' };
@@ -121,6 +142,5 @@ const verifyEmail = async (token) => {
     throw new ValidationError('Token inválido o expirado.');
   }
 };
-
 
 module.exports = { login, register, refreshToken, verifyEmail };

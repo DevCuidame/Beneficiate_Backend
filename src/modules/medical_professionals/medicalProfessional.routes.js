@@ -6,7 +6,8 @@ const {
   createMedicalProfessional,
   updateMedicalProfessional,
   deleteMedicalProfessional,
-  getAll
+  getAll,
+  getMedicalProfessionalsBySpecialtyId
 } = require('./medicalProfessional.controller');
 const validate = require('../../middlewares/validate.middleware');
 const { medicalProfessionalSchema } = require('./medicalProfessional.validation');
@@ -18,5 +19,8 @@ router.get('/user/:user_id', getMedicalProfessionalByUserId);
 router.post('/create', validate(medicalProfessionalSchema), createMedicalProfessional);
 router.put('/update/:id', validate(medicalProfessionalSchema), updateMedicalProfessional);
 router.delete('/remove/:id', deleteMedicalProfessional);
+
+router.get('/specialty/:specialty_id', getMedicalProfessionalsBySpecialtyId);
+
 
 module.exports = router;

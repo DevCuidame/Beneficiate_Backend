@@ -1,5 +1,21 @@
 const pool = require('../../config/connection');
 
+
+const getMedicalProfessionalsBySpecialtyId = async (specialtyId) => {
+  const query = `
+    SELECT mp.*
+    FROM medical_professionals mp
+    INNER JOIN medical_professionals_specialties mps 
+      ON mp.id = mps.medical_professional_id
+    WHERE mps.specialty_id = $1
+  `;
+  const result = await pool.query(query, [specialtyId]);
+  if (!result.rows.length) {
+    return [];
+  }
+  return result.rows;
+};
+
 const findMedicalProfessionalById = async (id) => {
   const result = await pool.query(
     'SELECT * FROM medical_professionals WHERE id = $1',
@@ -27,7 +43,6 @@ const createMedicalProfessional = async (professionalData) => {
     user_id,
     nationality,
     profession,
-    specialty,
     medical_registration,
     professional_card_number,
     university,
@@ -48,7 +63,6 @@ const createMedicalProfessional = async (professionalData) => {
       user_id,
       nationality,
       profession,
-      specialty,
       medical_registration,
       professional_card_number,
       university,
@@ -63,7 +77,7 @@ const createMedicalProfessional = async (professionalData) => {
       weekly_availability,
       created_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
     RETURNING *;
   `;
 
@@ -71,7 +85,6 @@ const createMedicalProfessional = async (professionalData) => {
     user_id,
     nationality,
     profession,
-    specialty,
     medical_registration,
     professional_card_number,
     university,
@@ -95,7 +108,6 @@ const updateMedicalProfessional = async (id, professionalData) => {
   const {
     nationality,
     profession,
-    specialty,
     medical_registration,
     professional_card_number,
     university,
@@ -114,27 +126,25 @@ const updateMedicalProfessional = async (id, professionalData) => {
     UPDATE medical_professionals SET
       nationality = $1,
       profession = $2,
-      specialty = $3,
-      medical_registration = $4,
-      professional_card_number = $5,
-      university = $6,
-      graduation_year = $7,
-      additional_certifications = $8,
-      years_experience = $9,
-      consultation_address = $10,
-      institution_name = $11,
-      attention_township_id = $12,
-      consultation_schedule = $13,
-      consultation_modes = $14,
-      weekly_availability = $15
-    WHERE id = $16
+      medical_registration = $3,
+      professional_card_number = $4,
+      university = $5,
+      graduation_year = $6,
+      additional_certifications = $7,
+      years_experience = $8,
+      consultation_address = $9,
+      institution_name = $10,
+      attention_township_id = $11,
+      consultation_schedule = $112,
+      consultation_modes = $13,
+      weekly_availability = $14
+    WHERE id = $15
     RETURNING *;
   `;
 
   const values = [
     nationality,
     profession,
-    specialty,
     medical_registration,
     professional_card_number,
     university,
@@ -167,4 +177,5 @@ module.exports = {
   updateMedicalProfessional,
   deleteMedicalProfessional,
   getAll,
+  getMedicalProfessionalsBySpecialtyId
 };

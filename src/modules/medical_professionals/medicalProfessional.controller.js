@@ -60,11 +60,23 @@ const deleteMedicalProfessional = async (req, res) => {
   }
 };
 
+const getMedicalProfessionalsBySpecialtyId = async (req, res) => {
+  try {
+    const { specialty_id } = req.params;
+    const professionals = await medicalProfessionalService.getMedicalProfessionalsBySpecialtyId(specialty_id);
+    successResponse(res, professionals, 'Profesionales recuperados exitosamente para la especialidad indicada');
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
+
 module.exports = {
   getMedicalProfessionalById,
   getMedicalProfessionalByUserId,
   createMedicalProfessional,
   updateMedicalProfessional,
   deleteMedicalProfessional,
-  getAll
+  getAll,
+  getMedicalProfessionalsBySpecialtyId
 };

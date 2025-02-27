@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const chatService = require('../chat/chat.service');
 const jwt = require('../../utils/jwt');
 const userRepository = require('../users/user.repository');
+const appointmentService = require('../appointment/appointment.service');
 const chatbotFlow = require('./chatbotFlow');
 
 const clients = new Map();
@@ -36,6 +37,7 @@ const initializeWebSocket = (server) => {
     }
     try {
       const user = req.user;
+      console.log("🚀 ~ wss.on ~ user:", user)
       ws.user = user;
       clients.set(user.id, ws);
       onlineUsers.add(user.id);
@@ -44,15 +46,27 @@ const initializeWebSocket = (server) => {
       notifyUserConnection(user.id);
       broadcastOnlineUsers();
 
-      ws.botState = chatbotFlow.STATES.AWAITING_DOCUMENT;
-      const welcomeMsg = {
-        event: 'chatbot_message',
-        message: 'Hola, bienvenido al chat de agendamiento de citas. Para iniciar, por favor digite su documento de identidad sin espacios ni puntos.',
-        sender_type: 'BOT',
-      };
-      ws.send(JSON.stringify(welcomeMsg));
-      console.log(`Chatbot response sent: ${welcomeMsg.message}`);
-      
+      if (user.isAgent && user.agentActive) {
+        const appointments = await appointmentService.getAllAppointments();
+        ws.send(
+          JSON.stringify({
+            event: 'all_appointments',
+            appointments,
+            message: 'Citas recuperadas exitosamente',
+          })
+        );
+        ws.botState = null;
+      } else {
+        ws.botState = chatbotFlow.STATES.AWAITING_DOCUMENT;
+        const welcomeMsg = {
+          event: 'chatbot_message',
+          message:
+            'Hola, bienvenido al chat de agendamiento de citas. Para iniciar, por favor digite su documento de identidad sin espacios ni puntos.',
+          sender_type: 'BOT',
+        };
+        ws.send(JSON.stringify(welcomeMsg));
+        console.log(`Chatbot response sent: ${welcomeMsg.message}`);
+      }
     } catch (error) {
       ws.close();
       return;
@@ -95,7 +109,9 @@ const initializeWebSocket = (server) => {
 const handleMessage = async (ws, data) => {
   try {
     if (!data.chat_id || !data.sender_id || !data.message) {
-      ws.send(JSON.stringify({ error: 'Datos incompletos para enviar el mensaje' }));
+      ws.send(
+        JSON.stringify({ error: 'Datos incompletos para enviar el mensaje' })
+      );
       return;
     }
     const savedMessage = await chatService.sendMessage(
@@ -166,7 +182,9 @@ const notifyStopTyping = (chat_id, user_id) => {
 const notifyMessageRead = (chat_id, user_id, message_id) => {
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ event: 'message_read', chat_id, user_id, message_id }));
+      client.send(
+        JSON.stringify({ event: 'message_read', chat_id, user_id, message_id })
+      );
     }
   });
 };
@@ -191,9 +209,25 @@ const broadcastOnlineUsers = () => {
   const onlineUserList = Array.from(onlineUsers);
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ event: 'online_users', users: onlineUserList }));
+      client.send(
+        JSON.stringify({ event: 'online_users', users: onlineUserList })
+      );
     }
   });
 };
 
-module.exports = { initializeWebSocket };
+const broadcastAppointment = async (appointment) => {
+  const enrichedAppointment = await appointmentService.getAppointmentById(appointment.id);
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          event: 'new_appointment',
+          appointment: enrichedAppointment,
+        })
+      );
+    }
+  });
+};
+
+module.exports = { initializeWebSocket, broadcastAppointment };

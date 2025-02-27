@@ -18,15 +18,14 @@ async function validateDocument(document, userId) {
   if (!document || document.length < 6) {
     return { valid: false, error: 'Documento inválido o incompleto.' };
   }
-
   const user = await userRepository.getUserById(userId);
   if (!user) {
-    throw new Error('Parece que el documento no pertenece a un usuario.');
+    return { valid: false, error: 'Parece que el documento no pertenece a un usuario.' };
   }
 
   const beneficiary = await beneficiaryRepository.getBeneficiaryByUserId(userId);
   if (!beneficiary) {
-    throw new Error('Parece que el documento no pertenece a uno de tus beneficiarios.');
+    return { valid: false, error: 'Parece que el documento no pertenece a uno de tus beneficiarios.' };
   }
 
   let belongsTo = '';
@@ -60,7 +59,7 @@ async function handleChatbotFlow(ws, data) {
         if (!validationResult.valid) {
           sendMessage(ws, {
             event: 'chatbot_message',
-            message: 'Documento inválido, por favor intente nuevamente.',
+            message: validationResult.error,
             sender_type: 'BOT'
           });
           return; 
@@ -101,11 +100,31 @@ async function handleChatbotFlow(ws, data) {
       case STATES.CONFIRMATION: {
         const confirmation = data.message.toLowerCase().trim();
         if (confirmation === 'si' || confirmation === 'sí') {
-          sendMessage(ws, {
-            event: 'chatbot_message',
-            message: 'Su cita ha sido recibida. Nos pondremos en contacto una vez tengas disponibilidad. ¡Gracias por utilizar nuestro servicio!',
-            sender_type: 'BOT'
-          });
+          // Construir los datos de la cita a partir de la información recogida en el flujo.
+          const appointmentData = {
+            user_id: ws.user.id,
+            beneficiary_id: ws.flowData.beneficiary_id || null,
+            appointment_date: new Date(),
+            status: 'PENDING',
+            notes: `Motivo: ${ws.flowData.consultReason}\nDescripción: ${ws.flowData.description}`,
+            is_for_beneficiary: ws.flowData.is_for_beneficiary || false
+          };
+      
+          try {
+            await appointmentService.createAppointment(appointmentData);
+            sendMessage(ws, {
+              event: 'chatbot_message',
+              message: 'Su cita ha sido recibida. Nos pondremos en contacto una vez tengas disponibilidad. ¡Gracias por utilizar nuestro servicio!',
+              sender_type: 'BOT'
+            });
+          } catch (error) {
+            console.error('Error al guardar la cita:', error);
+            sendMessage(ws, {
+              event: 'chatbot_message',
+              message: 'Ocurrió un error al guardar su cita. Por favor, intente nuevamente más tarde.',
+              sender_type: 'BOT'
+            });
+          }
           ws.botState = STATES.COMPLETED;
         } else if (confirmation === 'no') {
           sendMessage(ws, {
@@ -123,11 +142,13 @@ async function handleChatbotFlow(ws, data) {
         }
         break;
       }
+      
       default: {
         sendMessage(ws, {
           event: 'chatbot_message',
           message: 'Ha ocurrido un error en el flujo del chatbot. Reiniciando el proceso...',
-          sender_type: 'BOT'
+          sender_type: 'BOT',
+          shouldRestartFlow: true
         });
         ws.botState = STATES.AWAITING_DOCUMENT;
         break;

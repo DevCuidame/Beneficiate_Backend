@@ -10,7 +10,7 @@ END $$;
 -- Crear ENUM para status de citas médicas
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'appointment_status_enum') THEN
-        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED');
+        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'EXPIRED');
     END IF;
 END $$;
 
@@ -83,7 +83,6 @@ CREATE TABLE IF NOT EXISTS medical_professionals (
     
     -- Información profesional
     profession VARCHAR(255) NOT NULL,           -- Profesión (ej. Médico)
-    specialty VARCHAR(255) NOT NULL,            -- Especialidad médica
     medical_registration VARCHAR(255),          -- Número de registro médico 
     professional_card_number VARCHAR(255),      -- Número de tarjeta profesional
     university VARCHAR(255),                    -- Universidad de graduación
@@ -101,6 +100,23 @@ CREATE TABLE IF NOT EXISTS medical_professionals (
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS medical_specialties (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,       -- Nombre de la especialidad
+    description TEXT                  -- Descripción u observaciones de la especialidad
+    public_name VARCHAR(100)                  -- Descripción u observaciones de la especialidad
+    private_name VARCHAR(100)                  -- Descripción u observaciones de la especialidad
+    image_path TEXT                  -- Descripción u observaciones de la especialidad
+);
+
+CREATE TABLE IF NOT EXISTS medical_professionals_specialties (
+    medical_professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
+    PRIMARY KEY (medical_professional_id, specialty_id)
+);
+
+
 
 CREATE TABLE IF NOT EXISTS professional_documents (
     id SERIAL PRIMARY KEY,
@@ -260,6 +276,7 @@ CREATE TABLE IF NOT EXISTS public.medical_appointments (
     beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
     appointment_date TIMESTAMP NOT NULL,
     status appointment_status_enum DEFAULT 'PENDING',
+    -- specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE RESTRICT,
     notes TEXT,
     is_for_beneficiary BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

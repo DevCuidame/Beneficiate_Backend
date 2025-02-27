@@ -1,5 +1,17 @@
 const medicalProfessionalRepository = require('./medicalProfessional.repository');
+const professionalImagesService = require('../medical_professionals_image/medical_professionals_image.service');
 const { ValidationError, NotFoundError } = require('../../core/errors');
+
+
+const enrichProfessionalWithData = async (professional) => {
+  try {
+    const image = await professionalImagesService.getProfessionalImageById(professional.id);
+    return { ...professional, image };
+  } catch (error) {
+    return professional;
+  }
+};
+
 
 const getMedicalProfessionalById = async (id) => {
   const professional = await medicalProfessionalRepository.findMedicalProfessionalById(id);
@@ -60,11 +72,22 @@ const deleteMedicalProfessional = async (id) => {
   return { message: 'Profesional médico eliminado correctamente' };
 };
 
+
+const getMedicalProfessionalsBySpecialtyId = async (specialtyId) => {
+  const professionals = await medicalProfessionalRepository.getMedicalProfessionalsBySpecialtyId(specialtyId);
+  if (!professionals || professionals.length === 0) {
+    throw new NotFoundError('No se encontraron profesionales para la especialidad indicada.');
+  }
+  return await Promise.all(professionals.map((professional) => enrichProfessionalWithData(professional)));
+};
+
+
 module.exports = {
   getMedicalProfessionalById,
   getMedicalProfessionalByUserId,
   createMedicalProfessional,
   updateMedicalProfessional,
   deleteMedicalProfessional,
-  getAll
+  getAll,
+  getMedicalProfessionalsBySpecialtyId
 };

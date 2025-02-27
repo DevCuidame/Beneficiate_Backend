@@ -77,7 +77,7 @@ const rescheduleAppointment = async (id, newDate) => {
 
 // Obtener todas las citas
 const getAllAppointments = async () => {
-  const query = `SELECT * FROM medical_appointments`;
+  const query = `SELECT * FROM medical_appointments ORDER BY created_at DESC`;
   const result = await pool.query(query);
   return result.rows;
 };
@@ -171,6 +171,18 @@ const getAppointmentsForCallCenter = async ({
   }
 };
 
+const expireOldAppointments = async (twoHoursAgo) => {
+  const query = `
+    UPDATE medical_appointments
+    SET status = 'EXPIRED'
+    WHERE status = 'PENDING'
+      AND created_at < $1
+    RETURNING *;
+  `;
+  const result = await pool.query(query, [twoHoursAgo]);
+  return result;
+};
+
 
 // Notificación de eventos
 const sendNotification = async (userId, message) => {
@@ -188,4 +200,5 @@ module.exports = {
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
   sendNotification,
+  expireOldAppointments
 };

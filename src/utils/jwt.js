@@ -22,7 +22,7 @@ const generateVerificationToken = (user) => {
   return jwt.generateToken(
     { email: user.email },
     process.env.JWT_VERIFICATION_SECRET,
-    '1h' // Expira en 1 hora
+    '1h' 
   );
 };
 

@@ -7,6 +7,7 @@ const townshipRoutes = require('./modules/township/township.routes');
 const medicalAppointmentRoutes = require('./modules/appointment/appointment.routes');
 const chatRoutes = require('./modules/chat/chat.routes');
 const medicalProfessionalsRoutes = require('./modules/medical_professionals/medicalProfessional.routes');
+const medicalSpecialitiesRoutes = require('./modules/medical_specialties/medical_specialties.routes');
 const authenticate = require('./middlewares/auth.middleware');
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.use('/townships', townshipRoutes);
 router.use('/medical-appointment', medicalAppointmentRoutes);
 router.use('/chat', authenticate, chatRoutes);
 router.use('/medical-professionals', medicalProfessionalsRoutes);
+router.use('/medical-specialties', medicalSpecialitiesRoutes);
 
 
 module.exports = router;

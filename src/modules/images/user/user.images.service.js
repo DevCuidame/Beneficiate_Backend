@@ -11,7 +11,7 @@ const uploadImage = async (data) => {
 const getUserImages = async (user_id) => {
   const images = await imageRepository.getImagesByUser(user_id);
   if (!images.length) {
-    throw new NotFoundError('No se encontraron imágenes para este usuario');
+    return [];
   }
   return images;
 };
