@@ -101,6 +101,15 @@ CREATE TABLE IF NOT EXISTS medical_professionals (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE medical_professional_availability (
+    id SERIAL PRIMARY KEY,
+    professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    day_of_week VARCHAR(10) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+
+
 CREATE TABLE IF NOT EXISTS medical_specialties (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,       -- Nombre de la especialidad
@@ -274,11 +283,15 @@ CREATE TABLE IF NOT EXISTS public.medical_appointments (
     id SERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
+    professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
     appointment_date TIMESTAMP NOT NULL,
     status appointment_status_enum DEFAULT 'PENDING',
     -- specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE RESTRICT,
+    appointment_time TIME NOT NULL,
+    duration_minutes INT NOT NULL DEFAULT 30,
     notes TEXT,
     is_for_beneficiary BOOLEAN NOT NULL,
+    firstTime BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,6 +1,10 @@
 const medicalProfessionalRepository = require('./medicalProfessional.repository');
 const professionalImagesService = require('../medical_professionals_image/medical_professionals_image.service');
+const userService = require('../users/user.service');
+const medicalSpecialtiesService = require('../medical_specialties/medical_specialties.service'); 
 const { ValidationError, NotFoundError } = require('../../core/errors');
+const professionalAvailabilityService = require('./professionalAvailability/professionalAvailability.service'); 
+
 
 
 const enrichProfessionalWithData = async (professional) => {
@@ -76,9 +80,34 @@ const deleteMedicalProfessional = async (id) => {
 const getMedicalProfessionalsBySpecialtyId = async (specialtyId) => {
   const professionals = await medicalProfessionalRepository.getMedicalProfessionalsBySpecialtyId(specialtyId);
   if (!professionals || professionals.length === 0) {
-    throw new NotFoundError('No se encontraron profesionales para la especialidad indicada.');
+      return [];
   }
-  return await Promise.all(professionals.map((professional) => enrichProfessionalWithData(professional)));
+
+  const specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(specialtyId);
+  if (!specialty) {
+      return [];
+  }
+
+  return await Promise.all(
+      professionals.map(async (professional) => {
+          const enrichedProfessional = await enrichProfessionalWithData(professional);
+          const user = await userService.getUserById(professional.user_id);
+          const weeklyAvailability = await professionalAvailabilityService.getWeeklyAvailability(professional.id);
+
+          return {
+              ...enrichedProfessional,
+              user: user ? {
+                  id: user.id,
+                  first_name: user.first_name,
+                  last_name: user.last_name,
+                  email: user.email,
+                  phone: user.phone
+              } : null,
+              specialty_name: specialty.name,
+              availability: weeklyAvailability 
+          };
+      })
+  );
 };
 
 

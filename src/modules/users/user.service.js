@@ -29,4 +29,21 @@ const getUserById = async (id) => {
   return user;
 };
 
-module.exports = { findByEmail, getUserById };
+const findByIdentification = async (identification_type, identification_number) => {
+  const user = await userRepository.findByTypeIdentification(identification_type, identification_number);
+
+  if (!user) {
+    throw new NotFoundError('Usuario no encontrado con ese número y tipo de identificación.');
+  }
+
+  const plan = await planService.getPlanById(user.plan_id);
+  const images = await imageService.getUserImages(user.id);
+  const image = images.length > 0 ? images[0] : null;
+  const location = await townshipService.getTownshipById(user.city_id);
+
+  return { ...user, plan, image, location };
+};
+
+
+
+module.exports = { findByEmail, getUserById, findByIdentification};

@@ -9,6 +9,15 @@ const findByIdentification = async (identification_number) => {
   return result.rows[0];
 };
 
+const findByTypeIdentification = async (identification_type, identification_number) => {
+  const result = await pool.query(
+    'SELECT * FROM users WHERE identification_type = $1 AND identification_number = $2',
+    [identification_type, identification_number]
+  );
+
+  return result.rows[0];
+};
+
 const getUserById = async (id) => {
   const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
   return result.rows[0];
@@ -39,4 +48,4 @@ const updateUserStatus = async (user_id, isOnline) => {
 
 
 
-module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus};
+module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus, findByTypeIdentification};
