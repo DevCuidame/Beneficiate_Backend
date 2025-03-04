@@ -11,6 +11,10 @@ const appointmentSchema = Joi.object({
   beneficiary_id: Joi.number().optional().allow(null).messages({
     'number.base': 'El ID del beneficiario debe ser un número',
   }),
+
+  specialty_id: Joi.string().optional().allow(null).messages({
+    'number.base': 'El ID de la especialidad debe ser un número',
+  }),
   appointment_date: Joi.date()
     .greater('now')
     .optional()
@@ -31,6 +35,9 @@ const appointmentSchema = Joi.object({
 
   created_at: Joi.date().optional().allow('', null).messages({
     'date.base': 'La fecha de creación debe ser una fecha válida',
+  }),
+
+  created_at_formatted: Joi.string().optional().allow('', null).messages({
   }),
   professional_id: Joi.string()
     .optional()

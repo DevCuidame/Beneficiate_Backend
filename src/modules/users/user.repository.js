@@ -24,6 +24,12 @@ const getUserById = async (id) => {
 };
 
 
+const getUserByIdNum = async (id) => {
+  const result = await pool.query('SELECT * FROM users WHERE identification_number = $1', [id]);
+  return result.rows[0];
+};
+
+
 const findByEmail = async (email) => {
   const result = await pool.query(
     `SELECT 
@@ -48,4 +54,4 @@ const updateUserStatus = async (user_id, isOnline) => {
 
 
 
-module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus, findByTypeIdentification};
+module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus, findByTypeIdentification, getUserByIdNum};

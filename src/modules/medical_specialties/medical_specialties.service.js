@@ -1,6 +1,7 @@
 const medicalSpecialtiesRepository = require('./medical_specialties.repository');
 const { ValidationError, NotFoundError } = require('../../core/errors');
 
+
 const getMedicalSpecialtyById = async (id) => {
   const specialty = await medicalSpecialtiesRepository.findMedicalSpecialtyById(
     id

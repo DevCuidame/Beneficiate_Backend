@@ -23,7 +23,7 @@ const getMedicalProfessionalById = async (id) => {
     throw new NotFoundError('Profesional médico no encontrado');
   }
   return professional;
-};
+};  
 
 const getMedicalProfessionalByUserId = async (user_id) => {
   const professional = await medicalProfessionalRepository.findMedicalProfessionalByUserId(user_id);
@@ -35,11 +35,30 @@ const getMedicalProfessionalByUserId = async (user_id) => {
 
 const getAll = async () => {
   const professionals = await medicalProfessionalRepository.getAll();
-  if (!professionals || !professionals.length) {
-    return [];
+  if (!professionals || professionals.length === 0) {
+      return [];
   }
-  return professionals;
-};
+
+  return await Promise.all(
+      professionals.map(async (professional) => {
+          const enrichedProfessional = await enrichProfessionalWithData(professional);
+          const user = await userService.getUserById(professional.user_id);
+          const weeklyAvailability = await professionalAvailabilityService.getWeeklyAvailability(professional.id);
+
+          return {
+              ...enrichedProfessional,
+              user: user ? {
+                  id: user.id,
+                  first_name: user.first_name,
+                  last_name: user.last_name,
+                  email: user.email,
+                  phone: user.phone
+              } : null,
+              availability: weeklyAvailability 
+          };
+      })
+  );
+}; 
 
 
 const createMedicalProfessional = async (professionalData) => {
@@ -118,5 +137,6 @@ module.exports = {
   updateMedicalProfessional,
   deleteMedicalProfessional,
   getAll,
-  getMedicalProfessionalsBySpecialtyId
+  getMedicalProfessionalsBySpecialtyId,
+  enrichProfessionalWithData
 };

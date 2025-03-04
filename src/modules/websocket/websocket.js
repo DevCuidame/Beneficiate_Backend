@@ -45,6 +45,9 @@ const initializeWebSocket = (server) => {
 
       notifyUserConnection(user.id);
       broadcastOnlineUsers();
+      if (!user.isAgent) {
+        sendUserAppointments(user.id, ws); 
+      }
 
       if (user.isAgent && user.agentActive) {
         const appointments = await appointmentService.getAllAppointments();
@@ -61,7 +64,7 @@ const initializeWebSocket = (server) => {
         const welcomeMsg = {
           event: 'chatbot_message',
           message:
-            'Hola, bienvenido al chat de agendamiento de citas. Para iniciar, por favor digite su documento de identidad sin espacios ni puntos.',
+            'Bienvenido al chat de citas. Para empezar, por favor ingresa el documento de identidad de la persona que necesita la cita, sin espacios ni puntos.',
           sender_type: 'BOT',
         };
         ws.send(JSON.stringify(welcomeMsg));
@@ -230,4 +233,19 @@ const broadcastAppointment = async (appointment) => {
   });
 };
 
-module.exports = { initializeWebSocket, broadcastAppointment };
+const sendUserAppointments = async (user_id) => {
+  const userAppointments = await appointmentService.getAppointmentsByUserId(user_id);
+  const userSocket = clients.get(user_id);
+  
+  if (userSocket && userSocket.readyState === WebSocket.OPEN) {
+    userSocket.send(
+      JSON.stringify({
+        event: 'user_appointments',
+        appointments: userAppointments,
+      })
+    );
+  }
+};
+
+
+module.exports = { initializeWebSocket, broadcastAppointment, sendUserAppointments };

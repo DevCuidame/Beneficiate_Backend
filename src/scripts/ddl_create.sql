@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS public.medical_appointments (
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
     professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
     appointment_date TIMESTAMP,
     status appointment_status_enum DEFAULT 'PENDING',
     appointment_time TIME NOT NULL,

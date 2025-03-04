@@ -3,6 +3,8 @@ const pool = require('../../config/connection');
 const createAppointment = async ({
   user_id,
   beneficiary_id,
+  specialty_id,
+  professional_id,
   status,
   notes,
   is_for_beneficiary,
@@ -12,14 +14,17 @@ const createAppointment = async ({
     await client.query('BEGIN');
 
     const insertQuery = `
-      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary)
-      VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
+    // Reordenamos los valores para que coincidan con la consulta:
     const values = [
       user_id,
       beneficiary_id,
       status,
       notes,
       is_for_beneficiary,
+      professional_id,
+      specialty_id,
     ];
 
     const result = await client.query(insertQuery, values);
@@ -34,12 +39,20 @@ const createAppointment = async ({
   }
 };
 
+
 // Obtener una cita por ID
 const getAppointment = async (id) => {
   const query = `SELECT * FROM medical_appointments WHERE id = $1`;
   const result = await pool.query(query, [id]);
   return result.rows[0];
 };
+
+const getAppointmentsByUserId = async (id) => {
+  const query = `SELECT * FROM medical_appointments WHERE user_id = $1 ORDER BY appointment_date DESC`;
+  const result = await pool.query(query, [id]);
+  return result.rows;
+};
+
 
 // Actualizar una cita
 const updateAppointment = async (id, data) => {
@@ -52,6 +65,7 @@ const updateAppointment = async (id, data) => {
     notes,
     beneficiary_id,
     professional_id,
+    specialty_id,
     is_for_beneficiary,
     first_time,
     control,
@@ -110,6 +124,12 @@ const updateAppointment = async (id, data) => {
   if (control !== undefined) {
     setClauses.push(`control = $${idx}`);
     values.push(control);
+    idx++;
+  }
+
+  if (specialty_id !== undefined) {
+    setClauses.push(`specialty_id = $${idx}`);
+    values.push(specialty_id);
     idx++;
   }
   
@@ -271,5 +291,6 @@ module.exports = {
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
   sendNotification,
-  expireOldAppointments
+  expireOldAppointments,
+  getAppointmentsByUserId
 };

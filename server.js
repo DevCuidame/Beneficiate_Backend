@@ -6,6 +6,7 @@ const routes = require('./src/routes');
 const { handleErrors } = require('./src/core/errors');
 const path = require('path');
 require('./src/modules/appointment/expireAppointments.job');
+const testWhatsApp = require('./src/modules/twilio/test-whatsapp');
 
 const http = require('http');
 const {
@@ -41,4 +42,5 @@ app.use(handleErrors);
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+// testWhatsApp();
 });
