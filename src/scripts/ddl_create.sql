@@ -10,7 +10,7 @@ END $$;
 -- Crear ENUM para status de citas médicas
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'appointment_status_enum') THEN
-        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'EXPIRED');
+        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'TO_BE_CONFIRMED', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'EXPIRED');
     END IF;
 END $$;
 
@@ -284,14 +284,14 @@ CREATE TABLE IF NOT EXISTS public.medical_appointments (
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
     professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
-    appointment_date TIMESTAMP NOT NULL,
+    appointment_date TIMESTAMP,
     status appointment_status_enum DEFAULT 'PENDING',
-    -- specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE RESTRICT,
     appointment_time TIME NOT NULL,
     duration_minutes INT NOT NULL DEFAULT 30,
     notes TEXT,
     is_for_beneficiary BOOLEAN NOT NULL,
     firstTime BOOLEAN NOT NULL DEFAULT TRUE,
+    control BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -29,12 +29,15 @@ const getAppointmentById = async (req, res) => {
 const updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
+    const { userData } = req.body;
+
     const updatedAppointment = await appointmentService.updateAppointment(
       id,
       req.body
     );
     successResponse(res, updatedAppointment, 'Cita actualizada exitosamente');
   } catch (error) {
+    console.log("🚀 ~ updateAppointment ~ error:", error)
     errorResponse(res, error);
   }
 };

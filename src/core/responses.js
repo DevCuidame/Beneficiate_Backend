@@ -8,6 +8,7 @@ const successResponse = (res, data, message = 'Success', statusCode = 200) => {
       error: error.message || 'Internal Server Error',
       statusCode: error.statusCode || 500,
     });
+      console.log("🚀 ~ res.status ~ error.message:", error.message)
   };
   
   module.exports = { successResponse, errorResponse };

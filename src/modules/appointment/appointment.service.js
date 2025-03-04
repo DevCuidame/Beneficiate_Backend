@@ -100,7 +100,7 @@ const getAppointmentById = async (id) => {
 };
 
 
-const updateAppointment = async (id, appointmentData) => {
+const updateAppointment = async (id, data) => {
   const existingAppointment = await appointmentRepository.getAppointment(id);
   if (!existingAppointment) {
     throw new NotFoundError('Cita no encontrada.');
@@ -108,7 +108,7 @@ const updateAppointment = async (id, appointmentData) => {
 
   const updatedAppointment = await appointmentRepository.updateAppointment(
     id,
-    appointmentData
+    data
   );
   return formatDatesInData(updatedAppointment, ['appointment_date']);
 };
@@ -137,6 +137,8 @@ const getAllAppointments = async () => {
   const enrichedAppointments = await Promise.all(
     appointments.map(async (appointment) => {
       const formattedAppointment = formatDatesInData(appointment, ['appointment_date']);
+      formattedAppointment.created_at_formatted = formatDateTime(formattedAppointment.created_at);
+
       
       if (formattedAppointment.is_for_beneficiary) {
         let beneficiary = await beneficiaryService.getBeneficiaryById(formattedAppointment.beneficiary_id);
@@ -167,6 +169,24 @@ const getAllAppointments = async () => {
   };
 };
 
+const formatDateTime = (dateString) => {
+  const date = new Date(dateString);
+  
+  // Formateo de la fecha (Ej: "31 de agosto")
+  const formattedDate = date.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+  });
+
+  // Formateo de la hora en 12 horas con AM/PM (Ej: "11:00 am")
+  const formattedTime = date.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true, // Para usar AM/PM
+  });
+
+  return `${formattedDate}, ${formattedTime}`;
+};
 
 
 

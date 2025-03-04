@@ -3,7 +3,6 @@ const pool = require('../../config/connection');
 const createAppointment = async ({
   user_id,
   beneficiary_id,
-  appointment_date,
   status,
   notes,
   is_for_beneficiary,
@@ -13,12 +12,11 @@ const createAppointment = async ({
     await client.query('BEGIN');
 
     const insertQuery = `
-      INSERT INTO medical_appointments (user_id, beneficiary_id, appointment_date, status, notes, is_for_beneficiary)
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`;
+      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary)
+      VALUES ($1, $2, $3, $4, $5) RETURNING *`;
     const values = [
       user_id,
       beneficiary_id,
-      appointment_date,
       status,
       notes,
       is_for_beneficiary,
@@ -45,9 +43,82 @@ const getAppointment = async (id) => {
 
 // Actualizar una cita
 const updateAppointment = async (id, data) => {
-  const { appointment_date, status, notes } = data;
-  const query = `UPDATE medical_appointments SET appointment_date = $1, status = $2, notes = $3 WHERE id = $4 RETURNING *`;
-  const values = [appointment_date, status, notes, id];
+  console.log("🚀 ~ updateAppointment ~ data:", data)
+  const {
+    appointment_date,
+    appointment_time,
+    duration_minutes,
+    status,
+    notes,
+    beneficiary_id,
+    professional_id,
+    is_for_beneficiary,
+    first_time,
+    control,
+  } = data;
+  
+  let setClauses = [];
+  let values = [];
+  let idx = 1;
+  
+  if (appointment_date !== undefined) {
+    setClauses.push(`appointment_date = $${idx}`);
+    values.push(appointment_date);
+    idx++;
+  }
+  if (appointment_time !== undefined) {
+    setClauses.push(`appointment_time = $${idx}`);
+    values.push(appointment_time);
+    idx++;
+  }
+  if (duration_minutes !== undefined) {
+    setClauses.push(`duration_minutes = $${idx}`);
+    values.push(duration_minutes);
+    idx++;
+  }
+  if (status !== undefined) {
+    setClauses.push(`status = $${idx}`);
+    values.push(status);
+    idx++;
+  }
+  if (notes !== undefined) {
+    setClauses.push(`notes = $${idx}`);
+    values.push(notes);
+    idx++;
+  }
+  if (beneficiary_id !== undefined) {
+    setClauses.push(`beneficiary_id = $${idx}`);
+    values.push(beneficiary_id);
+    idx++;
+  }
+  if (professional_id !== undefined) {
+    setClauses.push(`professional_id = $${idx}`);
+    values.push(professional_id);
+    idx++;
+  }
+  if (is_for_beneficiary !== undefined) {
+    setClauses.push(`is_for_beneficiary = $${idx}`);
+    values.push(is_for_beneficiary);
+    idx++;
+  }
+  if (first_time !== undefined) {
+    setClauses.push(`first_time = $${idx}`);
+    values.push(first_time);
+    idx++;
+  }
+
+  if (control !== undefined) {
+    setClauses.push(`control = $${idx}`);
+    values.push(control);
+    idx++;
+  }
+  
+  if (setClauses.length === 0) {
+    throw new Error("No hay campos para actualizar");
+  }
+  
+  const query = `UPDATE medical_appointments SET ${setClauses.join(", ")} WHERE id = $${idx} RETURNING *`;
+  values.push(id);
   const result = await pool.query(query, values);
   return result.rows[0];
 };
