@@ -37,7 +37,7 @@ const initializeWebSocket = (server) => {
     }
     try {
       const user = req.user;
-      console.log("🚀 ~ wss.on ~ user:", user)
+      console.log('🚀 ~ wss.on ~ user:', user);
       ws.user = user;
       clients.set(user.id, ws);
       onlineUsers.add(user.id);
@@ -46,7 +46,7 @@ const initializeWebSocket = (server) => {
       notifyUserConnection(user.id);
       broadcastOnlineUsers();
       if (!user.isAgent) {
-        sendUserAppointments(user.id, ws); 
+        sendUserAppointments(user.id, ws);
       }
 
       if (user.isAgent && user.agentActive) {
@@ -87,12 +87,10 @@ const initializeWebSocket = (server) => {
         await handleMessageRead(data.chat_id, data.user_id, data.message_id);
       }
       // Si el mensaje no tiene un "event" definido, se asume que forma parte del flujo del chatbot.
-      else {
-        if (ws.botState) {
-          await chatbotFlow.handleChatbotFlow(ws, data);
-        } else {
-          await handleMessage(ws, data);
-        }
+      else if (data.event === 'init' || ws.botState) {
+        await chatbotFlow.handleChatbotFlow(ws, data);
+      } else {
+        await handleMessage(ws, data);
       }
     });
 
@@ -220,7 +218,9 @@ const broadcastOnlineUsers = () => {
 };
 
 const broadcastAppointment = async (appointment) => {
-  const enrichedAppointment = await appointmentService.getAppointmentById(appointment.id);
+  const enrichedAppointment = await appointmentService.getAppointmentById(
+    appointment.id
+  );
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(
@@ -234,9 +234,11 @@ const broadcastAppointment = async (appointment) => {
 };
 
 const sendUserAppointments = async (user_id) => {
-  const userAppointments = await appointmentService.getAppointmentsByUserId(user_id);
+  const userAppointments = await appointmentService.getAppointmentsByUserId(
+    user_id
+  );
   const userSocket = clients.get(user_id);
-  
+
   if (userSocket && userSocket.readyState === WebSocket.OPEN) {
     userSocket.send(
       JSON.stringify({
@@ -247,5 +249,8 @@ const sendUserAppointments = async (user_id) => {
   }
 };
 
-
-module.exports = { initializeWebSocket, broadcastAppointment, sendUserAppointments };
+module.exports = {
+  initializeWebSocket,
+  broadcastAppointment,
+  sendUserAppointments,
+};

@@ -10,6 +10,8 @@ const chatRoutes = require('./modules/chat/chat.routes');
 const medicalProfessionalsRoutes = require('./modules/medical_professionals/medicalProfessional.routes');
 const medicalSpecialitiesRoutes = require('./modules/medical_specialties/medical_specialties.routes');
 const authenticate = require('./middlewares/auth.middleware');
+const paymentsRoutes = require('./modules/payments/payments.routes');
+const plansRoutes = require('./modules/plans/plans.routes');
 
 const router = express.Router();
 
@@ -26,6 +28,7 @@ router.use('/medical-appointment', medicalAppointmentRoutes);
 router.use('/chat', authenticate, chatRoutes);
 router.use('/medical-professionals', medicalProfessionalsRoutes);
 router.use('/medical-specialties', medicalSpecialitiesRoutes);
-
+router.use('/payments', paymentsRoutes);
+router.use('/plans', plansRoutes);
 
 module.exports = router;

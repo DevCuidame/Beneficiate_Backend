@@ -325,6 +325,19 @@ const getAllAppointments = async () => {
         formattedAppointment.userData = user;
       }
 
+      if (formattedAppointment.professional_id) {
+        const professional = await professionalService.getMedicalProfessionalById(formattedAppointment.professional_id);
+        const professionalUser = await userService.getUserById(professional.user_id);
+        formattedAppointment.professionalData = professional;
+        formattedAppointment.professionalData.user = professionalUser;
+      }
+
+      // Obtener datos de la especialidad médica
+      if (formattedAppointment.specialty_id) {
+        const specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(formattedAppointment.specialty_id);
+        formattedAppointment.specialtyData = specialty;
+      }
+
       return formattedAppointment;
     })
   );

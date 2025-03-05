@@ -44,10 +44,22 @@ function sendMessage(ws, message) {
 
 async function handleChatbotFlow(ws, data) {
   try {
-    // Si el mensaje es de inicialización, asignamos el professionalId
     if (data.event && data.event === 'init') {
       ws.professionalId = data.professionalId;
+      console.log(data.professionalId);
       console.log("Professional ID set to:", ws.professionalId);
+      if (!ws.botState) {
+        ws.botState = STATES.AWAITING_DOCUMENT;
+        const welcomeMsg = {
+          event: 'chatbot_message',
+          message:
+            'Bienvenido al chat de citas. Para empezar, por favor ingresa el documento de identidad de la persona que necesita la cita, sin espacios ni puntos.',
+          sender_type: 'BOT',
+          professionalId: ws.professionalId,
+        };
+        sendMessage(ws, welcomeMsg);
+        console.log("Chatbot welcome message sent:", welcomeMsg.message);
+      }
       return;
     }
 
@@ -69,9 +81,6 @@ async function handleChatbotFlow(ws, data) {
 
         const specialties = await medicalSpecialtiesService.getAll();
         console.log("Lista de especialidades:", specialties); // Log para depuración
-        let specialtiesList = specialties.length > 0
-          ? specialties.map((specialty) => specialty.name).join(', ')
-          : 'No hay especialidades disponibles';
 
         sendMessage(ws, {
           event: 'chatbot_message',
@@ -140,6 +149,8 @@ async function handleChatbotFlow(ws, data) {
           event: 'chatbot_message',
           message: `Resumen de su consulta:\n- Motivo: ${ws.flowData.consultReason || ''}\n- Descripción: ${description}\n¿Desea confirmar el agendamiento de su cita? (si/no)`,
           sender_type: 'BOT',
+          list: true,
+          options: ['si', 'no']
         });
         ws.botState = STATES.CONFIRMATION;
         break;
@@ -154,7 +165,7 @@ async function handleChatbotFlow(ws, data) {
             beneficiary_id: ws.flowData.beneficiary_id || null,
             appointment_date: new Date(),
             status: 'PENDING',
-            notes: `Motivo: ${ws.flowData.consultReason || ''}\nDescripción: ${ws.flowData.description}`,
+            notes: `Descripción: ${ws.flowData.description}`,
             is_for_beneficiary: ws.flowData.is_for_beneficiary || false,
           };
 
@@ -167,6 +178,7 @@ async function handleChatbotFlow(ws, data) {
               event: 'chatbot_message',
               message: 'Su cita ha sido recibida. Nos pondremos en contacto una vez tengas disponibilidad. ¡Gracias por utilizar nuestro servicio!',
               sender_type: 'BOT',
+              redirectUrl: '/home'
             });
           } catch (error) {
             console.error('Error al guardar la cita:', error);
@@ -185,10 +197,13 @@ async function handleChatbotFlow(ws, data) {
           });
           ws.botState = STATES.COMPLETED;
         } else {
+          // Agregamos las opciones seleccionables "si" y "no"
           sendMessage(ws, {
             event: 'chatbot_message',
             message: 'No he entendido su respuesta. Por favor, confirme si desea agendar la cita respondiendo "si" o "no".',
             sender_type: 'BOT',
+            list: true,
+            options: ['si', 'no']
           });
         }
         break;

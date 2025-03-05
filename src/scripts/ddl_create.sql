@@ -178,6 +178,49 @@ CREATE TABLE IF NOT EXISTS plans (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE user_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id integer NOT NULL REFERENCES users(id),
+    plan_id integer NOT NULL REFERENCES plans(id),
+    transaction_id TEXT NOT NULL UNIQUE, -- ID de transacción de Wompi
+    reference TEXT NOT NULL UNIQUE,      -- Referencia única generada
+    amount NUMERIC(10,2) NOT NULL,       -- Monto de la transacción
+    currency VARCHAR(3) NOT NULL DEFAULT 'COP', -- Moneda
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING', 
+    is_valid BOOLEAN NOT NULL DEFAULT FALSE, -- Validez de la transacción
+    wompi_status TEXT,      -- Estado exacto de Wompi
+    wompi_response JSONB,   -- Respuesta completa de Wompi
+    payment_method VARCHAR(50),  -- Método de pago (CARD, PSE, etc)
+    installments INTEGER DEFAULT 1, -- Número de cuotas
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Índices para mejorar rendimiento
+    CONSTRAINT unique_transaction_id UNIQUE (transaction_id),
+    CONSTRAINT valid_amount CHECK (amount > 0)
+);
+
+-- Índices para optimizar consultas
+CREATE INDEX idx_user_transactions_user_id ON user_transactions(user_id);
+CREATE INDEX idx_user_transactions_status ON user_transactions(status);
+CREATE INDEX idx_user_transactions_created_at ON user_transactions(created_at);
+
+-- Trigger para actualizar updated_at automáticamente
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_user_transactions_modtime
+BEFORE UPDATE ON user_transactions
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_column();
+
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
@@ -196,6 +239,31 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     plan_id BIGINT NULL REFERENCES plans(id) ON DELETE SET NULL
 );
+
+-- Crear tabla de pagos si no existe
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    plan_id INTEGER NOT NULL REFERENCES plans(id),
+    amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    transaction_id VARCHAR(100),
+    payment_details JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Agregar columna plan_name a user_transactions si no existe
+ALTER TABLE user_transactions 
+ADD COLUMN IF NOT EXISTS plan_name VARCHAR(100);
+
+-- Crear índices para optimizar consultas
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(created_at);
 
 CREATE TABLE refresh_tokens (
     id SERIAL PRIMARY KEY,

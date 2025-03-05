@@ -52,6 +52,38 @@ const updateUserStatus = async (user_id, isOnline) => {
 };
 
 
+const updateUserPlan = async (userId, planId) => {
+  try {
+    const result = await pool.query(
+      'UPDATE users SET plan_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [planId, userId]
+    );
+
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error actualizando plan de usuario:', error);
+    throw error;
+  }
+};
 
 
-module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus, findByTypeIdentification, getUserByIdNum};
+const getUserPaymentHistory = async (userId) => {
+  const result = await pool.query(
+    `SELECT 
+      id, 
+      transaction_id, 
+      plan_id, 
+      amount, 
+      status, 
+      created_at 
+    FROM user_payments 
+    WHERE user_id = $1 
+    ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  return result.rows;
+};
+
+
+module.exports = { findByIdentification, findByEmail, getUserById, updateUserStatus, findByTypeIdentification, getUserByIdNum, updateUserPlan, getUserPaymentHistory};

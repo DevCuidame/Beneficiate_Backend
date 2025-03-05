@@ -145,7 +145,7 @@ const updateAppointment = async (id, data) => {
 
 // Cancelar una cita
 const cancelAppointment = async (id) => {
-  const query = `UPDATE medical_appointments SET status = 'CANCELLED' WHERE id = $1 RETURNING *`;
+  const query = `DELETE FROM medical_appointments WHERE id = $1 RETURNING *`;
   const result = await pool.query(query, [id]);
 
   if (result.rows.length > 0) {
@@ -153,6 +153,7 @@ const cancelAppointment = async (id) => {
   }
   return result.rows[0];
 };
+
 
 // Reprogramar una cita
 const rescheduleAppointment = async (id, newDate) => {

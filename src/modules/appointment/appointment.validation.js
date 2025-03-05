@@ -51,6 +51,8 @@ const appointmentSchema = Joi.object({
     
 
   userData: Joi.any().optional().allow('', null).messages({}),
+  professionalData: Joi.any().optional().allow('', null).messages({}),
+  specialtyData: Joi.any().optional().allow('', null).messages({}),
 
   control: Joi.boolean().optional().allow('', null).messages({}),
 

@@ -40,6 +40,33 @@ const handleErrors = (err, req, res, next) => {
   });
 };
 
+
+class PaymentError extends Error {
+  constructor(message, code = 'PAYMENT_ERROR') {
+    super(message);
+    this.name = 'PaymentError';
+    this.code = code;
+  }
+}
+
+class TransactionError extends PaymentError {
+  constructor(message) {
+    super(message, 'TRANSACTION_ERROR');
+  }
+}
+
+class InsufficientFundsError extends PaymentError {
+  constructor() {
+    super('Fondos insuficientes', 'INSUFFICIENT_FUNDS');
+  }
+}
+
+class PaymentDeclinedError extends PaymentError {
+  constructor() {
+    super('Pago rechazado', 'PAYMENT_DECLINED');
+  }
+}
+
 module.exports = {
   AppError,
   NotFoundError,
@@ -47,4 +74,8 @@ module.exports = {
   UnauthorizedError,
   ForbiddenError,
   handleErrors,
+  PaymentError,
+  TransactionError,
+  InsufficientFundsError,
+  PaymentDeclinedError
 };
