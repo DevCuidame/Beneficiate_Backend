@@ -396,6 +396,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
     id SERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     plan_id BIGINT REFERENCES plans(id) ON DELETE RESTRICT,
+    code VARCHAR(255) UNIQUE,
     amount DECIMAL(10,2) NOT NULL,
     payment_status payment_status_enum  DEFAULT 'PENDING',
     transaction_id VARCHAR(255) UNIQUE,

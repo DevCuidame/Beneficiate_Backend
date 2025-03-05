@@ -1208,8 +1208,8 @@ UPDATE departments SET name = 'Bogotá' WHERE id = 3;
 
 
 INSERT INTO public.plans (name, code, description, price, duration_days, max_beneficiaries, is_active, created_at)
-VALUES ('Individual', 'INDIVIDUAL-UNIQUE-X9Y7Z', 'Acceso limitado a servicios', 250.000, 365, 0, true, CURRENT_TIMESTAMP),
-       ('Familiar', 'FAMILY-UNIQUE-A1B2C3', 'Acceso completo a todos los servicios', 480.000, 365, 4, true, CURRENT_TIMESTAMP),
+VALUES ('Individual', 'INDIVIDUAL-UNIQUE-X9Y7Z', 'Acceso limitado a servicios', 250000, 365, 0, true, CURRENT_TIMESTAMP),
+       ('Familiar', 'FAMILY-UNIQUE-A1B2C3', 'Acceso completo a todos los servicios', 480000, 365, 4, true, CURRENT_TIMESTAMP),
 
 
 INSERT INTO medical_specialties (name, description)
