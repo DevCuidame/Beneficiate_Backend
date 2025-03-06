@@ -75,79 +75,6 @@ DO $$ BEGIN
 END $$;
 
 
-CREATE TABLE IF NOT EXISTS medical_professionals (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE, -- 
-    
-    nationality VARCHAR(100),
-    
-    -- Información profesional
-    profession VARCHAR(255) NOT NULL,           -- Profesión (ej. Médico)
-    medical_registration VARCHAR(255),          -- Número de registro médico 
-    professional_card_number VARCHAR(255),      -- Número de tarjeta profesional
-    university VARCHAR(255),                    -- Universidad de graduación
-    graduation_year INT,                        -- Año de graduación
-    additional_certifications TEXT,             -- Cursos, certificaciones o especializaciones adicionales
-    years_experience INT,                       -- Años de experiencia profesional
-    
-    -- Información de atención
-    consultation_address VARCHAR(255),          -- Dirección del consultorio o centro médico
-    institution_name VARCHAR(255),              -- Nombre de la institución o clínica (si aplica)
-    attention_township_id BIGINT REFERENCES townships(id) ON DELETE SET NULL,  -- Ciudad de atención
-    consultation_schedule TEXT,                 -- Horarios de consulta 
-    consultation_modes consultation_mode_enum[] NOT NULL,  -- Modalidades de atención (pueden ser varias)
-    weekly_availability VARCHAR(255),           -- Disponibilidad semanal (ej. "Lunes a Viernes 8:00-17:00")
-    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE medical_professional_availability (
-    id SERIAL PRIMARY KEY,
-    professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
-    day_of_week VARCHAR(10) NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL
-);
-
-
-CREATE TABLE IF NOT EXISTS medical_specialties (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,       -- Nombre de la especialidad
-    description TEXT                  -- Descripción u observaciones de la especialidad
-    public_name VARCHAR(100)                  -- Descripción u observaciones de la especialidad
-    private_name VARCHAR(100)                  -- Descripción u observaciones de la especialidad
-    image_path TEXT                  -- Descripción u observaciones de la especialidad
-);
-
-CREATE TABLE IF NOT EXISTS medical_professionals_specialties (
-    medical_professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
-    specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
-    PRIMARY KEY (medical_professional_id, specialty_id)
-);
-
-
-
-CREATE TABLE IF NOT EXISTS professional_documents (
-    id SERIAL PRIMARY KEY,
-    professional_id INT REFERENCES medical_professionals(id) ON DELETE CASCADE,
-    document_type professional_document_type_enum NOT NULL, 
-    document_path VARCHAR(255) NOT NULL,               
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
--- TABLA PARA IMÁGENES DEL PROFESIONAL
-
-CREATE TABLE IF NOT EXISTS professional_images (
-    id SERIAL PRIMARY KEY,
-    professional_id INT REFERENCES medical_professionals(id) ON DELETE CASCADE,
-    public_name VARCHAR(100),
-    private_name VARCHAR(100),
-    profile_path VARCHAR(100),
-    header_path VARCHAR(100),
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 
 CREATE TABLE departments (
     id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -177,6 +104,27 @@ CREATE TABLE IF NOT EXISTS plans (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    identification_type identification_type_enum  NOT NULL,
+    identification_number VARCHAR(80) NOT NULL,
+    address VARCHAR(100) NOT NULL,
+    gender VARCHAR(30) NOT NULL,
+    birth_date VARCHAR(30) NOT NULL,
+    city_id BIGINT REFERENCES townships(id) ON DELETE RESTRICT,
+    phone VARCHAR(80) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    verified BOOLEAN NOT NULL DEFAULT FALSE,
+    online_status BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    plan_id BIGINT NULL REFERENCES plans(id) ON DELETE SET NULL
+);
+
 
 CREATE TABLE user_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -221,25 +169,6 @@ BEFORE UPDATE ON user_transactions
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    identification_type identification_type_enum  NOT NULL,
-    identification_number VARCHAR(80) NOT NULL,
-    address VARCHAR(100) NOT NULL,
-    gender VARCHAR(30) NOT NULL,
-    birth_date VARCHAR(30) NOT NULL,
-    city_id BIGINT REFERENCES townships(id) ON DELETE RESTRICT,
-    phone VARCHAR(80) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    verified BOOLEAN NOT NULL DEFAULT FALSE,
-    online_status BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    plan_id BIGINT NULL REFERENCES plans(id) ON DELETE SET NULL
-);
-
 -- Crear tabla de pagos si no existe
 CREATE TABLE IF NOT EXISTS payments (
     id SERIAL PRIMARY KEY,
@@ -255,7 +184,6 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Agregar columna plan_name a user_transactions si no existe
 ALTER TABLE user_transactions 
 ADD COLUMN IF NOT EXISTS plan_name VARCHAR(100);
@@ -347,31 +275,6 @@ FOR EACH ROW EXECUTE FUNCTION update_chat_timestamp();
 
 
 
-CREATE TABLE IF NOT EXISTS public.medical_appointments (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
-    professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
-    specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
-    appointment_date TIMESTAMP,
-    status appointment_status_enum DEFAULT 'PENDING',
-    appointment_time TIME NOT NULL,
-    duration_minutes INT NOT NULL DEFAULT 30,
-    notes TEXT,
-    is_for_beneficiary BOOLEAN NOT NULL,
-    firstTime BOOLEAN NOT NULL DEFAULT TRUE,
-    control BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
-CREATE TABLE IF NOT EXISTS public.call_assignments (
-    id SERIAL PRIMARY KEY,
-    agent_id BIGINT REFERENCES call_center_agents(id) ON DELETE SET NULL,
-    appointment_id BIGINT REFERENCES medical_appointments(id) ON DELETE CASCADE,
-    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status appointment_status_enum DEFAULT 'PENDING'
-);
 
 
 
@@ -392,17 +295,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS public.payments (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    plan_id BIGINT REFERENCES plans(id) ON DELETE RESTRICT,
-    code VARCHAR(255) UNIQUE,
-    amount DECIMAL(10,2) NOT NULL,
-    payment_status payment_status_enum  DEFAULT 'PENDING',
-    transaction_id VARCHAR(255) UNIQUE,
-    payment_method payment_method_enum  NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+
 
 
 
@@ -512,4 +405,118 @@ CREATE TABLE IF NOT EXISTS public.user_emergency_contacts (
     contact_phone VARCHAR(80) NOT NULL,
     relationship VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+CREATE TABLE IF NOT EXISTS medical_professionals (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE, -- 
+    
+    nationality VARCHAR(100),
+    
+    -- Información profesional
+    profession VARCHAR(255) NOT NULL,           -- Profesión (ej. Médico)
+    medical_registration VARCHAR(255),          -- Número de registro médico 
+    professional_card_number VARCHAR(255),      -- Número de tarjeta profesional
+    university VARCHAR(255),                    -- Universidad de graduación
+    graduation_year INT,                        -- Año de graduación
+    additional_certifications TEXT,             -- Cursos, certificaciones o especializaciones adicionales
+    years_experience INT,                       -- Años de experiencia profesional
+    
+    -- Información de atención
+    consultation_address VARCHAR(255),          -- Dirección del consultorio o centro médico
+    institution_name VARCHAR(255),              -- Nombre de la institución o clínica (si aplica)
+    attention_township_id BIGINT REFERENCES townships(id) ON DELETE SET NULL,  -- Ciudad de atención
+    consultation_schedule TEXT,                 -- Horarios de consulta 
+    consultation_modes consultation_mode_enum[] NOT NULL,  -- Modalidades de atención (pueden ser varias)
+    weekly_availability VARCHAR(255),           -- Disponibilidad semanal (ej. "Lunes a Viernes 8:00-17:00")
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE medical_professional_availability (
+    id SERIAL PRIMARY KEY,
+    professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    day_of_week VARCHAR(10) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS medical_specialties (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,       -- Nombre de la especialidad
+    description TEXT ,                 -- Descripción u observaciones de la especialidad
+    public_name VARCHAR(100),                  -- Descripción u observaciones de la especialidad
+    private_name VARCHAR(100),                  -- Descripción u observaciones de la especialidad
+    image_path TEXT                  -- Descripción u observaciones de la especialidad
+);
+
+CREATE TABLE IF NOT EXISTS medical_professionals_specialties (
+    medical_professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
+    PRIMARY KEY (medical_professional_id, specialty_id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS professional_documents (
+    id SERIAL PRIMARY KEY,
+    professional_id INT REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    document_type professional_document_type_enum NOT NULL, 
+    document_path VARCHAR(255) NOT NULL,               
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- TABLA PARA IMÁGENES DEL PROFESIONAL
+
+CREATE TABLE IF NOT EXISTS professional_images (
+    id SERIAL PRIMARY KEY,
+    professional_id INT REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    public_name VARCHAR(100),
+    private_name VARCHAR(100),
+    profile_path VARCHAR(100),
+    header_path VARCHAR(100),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS public.medical_appointments (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    beneficiary_id BIGINT NULL REFERENCES beneficiaries(id) ON DELETE SET NULL,
+    professional_id INT NOT NULL REFERENCES medical_professionals(id) ON DELETE CASCADE,
+    specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
+    appointment_date TIMESTAMP,
+    status appointment_status_enum DEFAULT 'PENDING',
+    appointment_time TIME NOT NULL,
+    duration_minutes INT NOT NULL DEFAULT 30,
+    notes TEXT,
+    is_for_beneficiary BOOLEAN NOT NULL,
+    firstTime BOOLEAN NOT NULL DEFAULT TRUE,
+    control BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS public.call_assignments (
+    id SERIAL PRIMARY KEY,
+    agent_id BIGINT REFERENCES call_center_agents(id) ON DELETE SET NULL,
+    appointment_id BIGINT REFERENCES medical_appointments(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status appointment_status_enum DEFAULT 'PENDING'
+);
+
+CREATE TABLE message_logs (
+  id SERIAL PRIMARY KEY,
+  phone_number VARCHAR(20) NOT NULL,
+  channel VARCHAR(10) NOT NULL,
+  message TEXT NOT NULL,
+  message_sid VARCHAR(50),
+  status VARCHAR(20),
+  error TEXT,
+  sent_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

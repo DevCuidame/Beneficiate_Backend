@@ -9,6 +9,15 @@ const findByIdentification = async (identification_number) => {
   return result.rows[0];
 };
 
+const findByTypeIdentification = async (identification_type, identification_number) => {
+  const result = await pool.query(
+    'SELECT * FROM beneficiaries WHERE identification_type = $1 AND identification_number = $2',
+    [identification_type, identification_number]
+  );
+
+  return result.rows[0];
+};
+
 const findById = async (id) => {
   const result = await pool.query('SELECT * FROM beneficiaries WHERE id = $1', [
     id,
@@ -296,5 +305,6 @@ module.exports = {
   countByUserId,
   getBeneficiaryHealthData,
   getBeneficiaryByUserId,
-  countUserBeneficiaries
+  countUserBeneficiaries,
+  findByTypeIdentification
 };

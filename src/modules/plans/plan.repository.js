@@ -11,13 +11,14 @@ const findAllPlans = async () => {
 
 const findPlanById = async (plan_id) => {
   const result = await pool.query(
-    `SELECT id, name, description, price, duration_days, max_beneficiaries, is_active, created_at
+    `SELECT *
      FROM plans
      WHERE id = $1`,
     [plan_id]
   );
   return result.rows[0] || null;
 };
+
 
 const createPlan = async (planData) => {
   const { name, description, price, duration_days, max_beneficiaries, is_active } = planData;

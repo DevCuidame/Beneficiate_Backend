@@ -29,7 +29,6 @@ const getAppointmentById = async (req, res) => {
 const updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userData } = req.body;
 
     const updatedAppointment = await appointmentService.updateAppointment(
       id,

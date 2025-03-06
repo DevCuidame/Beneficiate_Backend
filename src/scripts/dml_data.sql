@@ -1209,12 +1209,97 @@ UPDATE departments SET name = 'Bogotá' WHERE id = 3;
 
 INSERT INTO public.plans (name, code, description, price, duration_days, max_beneficiaries, is_active, created_at)
 VALUES ('Individual', 'INDIVIDUAL-UNIQUE-X9Y7Z', 'Acceso limitado a servicios', 250000, 365, 0, true, CURRENT_TIMESTAMP),
-       ('Familiar', 'FAMILY-UNIQUE-A1B2C3', 'Acceso completo a todos los servicios', 480000, 365, 4, true, CURRENT_TIMESTAMP),
+       ('Familiar', 'FAMILY-UNIQUE-A1B2C3', 'Acceso completo a todos los servicios', 480000, 365, 4, true, CURRENT_TIMESTAMP);
+
+INSERT INTO medical_specialties (id, name, description, public_name, private_name, image_path) VALUES
+(1, 'Cardiología', 'Especialista en el corazón y sistema cardiovascular', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Cardiology_001.jpg'),
+(2, 'Medicina General', 'Especialista en el cuidado de niños y adolescentes', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/General_Medicine_001.jpg'),
+(3, 'Laboratorio', 'Especialista en la piel', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Laboratory_001.jpg'),
+(4, 'Nefrología', 'Especialista en el sistema respiratorio', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Nephrology_001.jpg'),
+(5, 'Fisioterapia', 'Especialidad médica centrada en el corazón y sistema cardiovascular', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Physiotherapy_001.jpg'),
+(6, 'Pediatría', 'Especialidad médica centrada en el cuidado de niños y adolescentes', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Cardiology_001.jpg'),
+(7, 'Dermatología', 'Especialidad médica que se enfoca en la piel y sus enfermedades', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/General_Medicine_001.jpg'),
+(8, 'Neurología', 'Especialidad médica que trata el sistema nervioso y sus trastornos', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Laboratory_001.jpg'),
+(9, 'Ortopedia', 'Especialidad médica que se encarga de problemas del sistema musculoesquelético', NULL, NULL, 'home/beneficiate/uploads/medical_specialties/Nephrology_001.jpg');
 
 
-INSERT INTO medical_specialties (name, description)
+INSERT INTO users (
+    id, first_name, last_name, identification_type, identification_number, 
+    address, gender, birth_date, city_id, phone, email, password, 
+    verified, online_status, created_at, plan_id
+) VALUES
+(
+    1, 'Carlos', 'González', 'CC', '12345678', 
+    'Calle 123, Bogotá', 'Masculino', '1990-05-15', 1, 
+    '+573001112233', 'carlos.gonzalez@example.com', '$2y$10$abc123hashedpassword', 
+    TRUE, TRUE, NOW(), NULL
+),
+(
+    2, 'María', 'Fernández', 'PASSPORT', 'AB1234567', 
+    'Avenida 45, Medellín', 'Femenino', '1985-09-23', 2, 
+    '+573002223344', 'maria.fernandez@example.com', '$2y$10$def456hashedpassword', 
+    TRUE, FALSE, NOW(), NULL
+),
+(
+    3, 'Juan', 'Martínez', 'CC', '987654321', 
+    'Carrera 67, Cali', 'Masculino', '1995-12-10', 3, 
+    '+573003334455', 'juan.martinez@example.com', '$2y$10$ghi789hashedpassword', 
+    FALSE, FALSE, NOW(), NULL
+);
+
+
+
+INSERT INTO medical_professionals (user_id, nationality, profession, medical_registration, professional_card_number, university, graduation_year, additional_certifications, years_experience, consultation_address, institution_name, attention_township_id, consultation_schedule, consultation_modes, weekly_availability)
+VALUES
+(1, 'EE.UU.', 'Cardiólogo', 'MR12345', 'PCN67890', 'Harvard University', 2005, 'Certificado en cirugía cardiovascular', 18, '123 Heart Street, NY', 'Hospital Cardiológico', 1, 'Lunes a Viernes 08:00-16:00', ARRAY['PRESENCIAL'::consultation_mode_enum, 'VIRTUAL'::consultation_mode_enum], 'Lunes a Viernes 08:00-16:00'),
+(2, 'Canadá', 'Médico General', 'MR67890', 'PCN12345', 'University of Toronto', 2010, 'Especialización en Pediatría', 14, '456 Health Ave, Toronto', 'Clínica Familiar', 2, 'Lunes a Viernes 09:00-17:00', ARRAY['PRESENCIAL'::consultation_mode_enum], 'Lunes a Viernes 09:00-17:00'),
+(3, 'Reino Unido', 'Neurólogo', 'MR54321', 'PCN98765', 'Oxford University', 2008, 'Máster en neurociencia', 16, '789 Neuro St, London', 'Neuroclinic UK', 3, 'Martes a Sábado 08:30-16:30', ARRAY['PRESENCIAL'::consultation_mode_enum, 'VIRTUAL'::consultation_mode_enum], 'Martes a Sábado 08:30-16:30');
+
+
+
+
+INSERT INTO medical_professional_availability (professional_id, day_of_week, start_time, end_time)
+VALUES
+-- Disponibilidad completa para el profesional 1
+(1, 'Lunes', '08:00:00', '16:00:00'),
+(1, 'Martes', '08:00:00', '16:00:00'),
+(1, 'Miércoles', '08:00:00', '16:00:00'),
+(1, 'Jueves', '08:00:00', '16:00:00'),
+(1, 'Viernes', '08:00:00', '16:00:00'),
+
+-- Disponibilidad completa para el profesional 2
+(2, 'Lunes', '09:00:00', '17:00:00'),
+(2, 'Martes', '09:00:00', '17:00:00'),
+(2, 'Miércoles', '09:00:00', '17:00:00'),
+(2, 'Jueves', '09:00:00', '17:00:00'),
+(2, 'Viernes', '09:00:00', '17:00:00'),
+
+-- Disponibilidad completa para el profesional 3
+(3, 'Lunes', '08:30:00', '16:30:00'),
+(3, 'Martes', '08:30:00', '16:30:00'),
+(3, 'Miércoles', '08:30:00', '16:30:00'),
+(3, 'Jueves', '08:30:00', '16:30:00'),
+(3, 'Viernes', '08:30:00', '16:30:00');
+
+
+
+INSERT INTO professional_images (professional_id, public_name, private_name, profile_path, header_path, uploaded_at)
+VALUES
+(1, 'Dr. John Doe', 'john_doe_private.png', 'home/beneficiate/uploads/health_professional/health_professional_001.jpg', 'home/beneficiate/uploads/health_professional/health_professional_001.jpg', '2025-02-27 12:25:20'),
+(2, 'Dr. Jane Smith', 'jane_smith_private.png', 'home/beneficiate/uploads/health_professional/health_professional_002.png', 'home/beneficiate/uploads/health_professional/health_professional_002.png', '2025-02-27 12:25:20'),
+(3, 'Dr. Alan Turing', 'alan_turing_private.png', 'home/beneficiate/uploads/health_professional/health_professional_003.png', 'home/beneficiate/uploads/health_professional/health_professional_003.jpg', '2025-02-27 12:25:20');
+
+
+
+INSERT INTO medical_professionals_specialties (medical_professional_id, specialty_id)
 VALUES 
-  ('Cardiología', 'Especialista en el corazón y sistema cardiovascular'),
-  ('Pediatría', 'Especialista en el cuidado de niños y adolescentes'),
-  ('Dermatología', 'Especialista en la piel'),
-  ('Neumología', 'Especialista en el sistema respiratorio');
+  (1, 1),
+  (1, 4),
+  (2, 1),
+  (2, 4),
+  (3, 1),
+  (3, 4);
+
+
+
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users) + 1);

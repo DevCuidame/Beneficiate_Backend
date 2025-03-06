@@ -1,5 +1,5 @@
-const medicalProfessionalService = require('./medicalprofessional.service');
 const { successResponse, errorResponse } = require('../../core/responses');
+const medicalProfessionalService = require('./medicalProfessional.service');
 
 const getMedicalProfessionalById = async (req, res) => {
   try {

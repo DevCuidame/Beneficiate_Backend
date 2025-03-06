@@ -19,7 +19,7 @@ const verifyToken = (token, secret) => {
 
 
 const generateVerificationToken = (user) => {
-  return jwt.generateToken(
+  return jwt.sign(
     { email: user.email },
     process.env.JWT_VERIFICATION_SECRET,
     '1h' 

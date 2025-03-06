@@ -113,8 +113,8 @@ const register = async (userData) => {
   userData.password = await bcrypt.hash(userData.password, 10);
   const newUser = await authRepository.createUser(userData);
 
-  const verificationToken = jwt.generateVerificationToken(newUser);
-  await emailService.sendVerificationEmail(newUser, verificationToken);
+  // const verificationToken = jwt.generateVerificationToken(newUser);
+  // await emailService.sendVerificationEmail(newUser, verificationToken);
 
   if (!newUser || !newUser.id) {
     throw new ValidationError('No logramos guardar tu imagen');
