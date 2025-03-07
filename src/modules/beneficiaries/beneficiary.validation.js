@@ -65,18 +65,18 @@ const beneficiarySchema = Joi.object({
     'any.required': 'El tipo de sangre es obligatorio',
     'string.empty': 'El tipo de sangre no puede estar vacío',
   }),
-  health_provider: Joi.string().max(50).optional().allow('').messages({
+  health_provider: Joi.string().max(50).optional().allow('', null).messages({
     'string.max': 'El proveedor de salud no puede tener más de 50 caracteres',
   }),
-  prepaid_health: Joi.string().max(50).optional().allow('').messages({
+  prepaid_health: Joi.string().max(50).optional().allow('', null).messages({
     'string.max':
       'El seguro de salud prepagado no puede tener más de 50 caracteres',
   }),
-  work_risk_insurance: Joi.string().max(50).optional().allow('').messages({
+  work_risk_insurance: Joi.string().max(50).optional().allow('', null).messages({
     'string.max':
       'El seguro de riesgos laborales no puede tener más de 50 caracteres',
   }),
-  funeral_insurance: Joi.string().max(50).optional().allow('').messages({
+  funeral_insurance: Joi.string().max(50).optional().allow('', null).messages({
     'string.max': 'El seguro funerario no puede tener más de 50 caracteres',
   }),
   removed: Joi.boolean().default(false),

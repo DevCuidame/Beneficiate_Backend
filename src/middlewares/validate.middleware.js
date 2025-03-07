@@ -1,5 +1,6 @@
 // middleware/validate.middleware.js
 const validate = (schema) => (req, res, next) => {
+  console.log(req.body)
   const { error } = schema.validate(req.body, { abortEarly: false });
   if (error) {
     return res
