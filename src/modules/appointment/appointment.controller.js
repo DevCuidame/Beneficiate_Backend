@@ -16,6 +16,21 @@ const createAppointment = async (req, res) => {
   }
 };
 
+
+const createNewAppointment = async (req, res) => {
+  try {
+    const appointment = await appointmentService.createNewAppointment(req.body);
+
+    if (appointment) {
+      broadcastAppointment(appointment);
+    }
+    successResponse(res, appointment, 'Cita creada exitosamente');
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
+
 const getAppointmentById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -157,4 +172,5 @@ module.exports = {
   getAppointmentsByUser,
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
+  createNewAppointment
 };

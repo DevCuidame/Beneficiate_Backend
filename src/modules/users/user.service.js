@@ -38,12 +38,10 @@ const findByIdentification = async (
     identification_type,
     identification_number
   );
-  console.log(user);
   const beneficiary = await beneficiaryRepository.findByTypeIdentification(
     identification_type,
     identification_number
   );
-  console.log(beneficiary);
 
   if (!user && !beneficiary) {
     throw new NotFoundError(
@@ -57,13 +55,14 @@ const findByIdentification = async (
     const image = images.length > 0 ? images[0] : null;
     const location = await townshipService.getTownshipById(user.city_id);
 
-    return { ...user, plan, image, location };
+    return { ...user, plan, image, location, is_user: true };
   } else if (beneficiary) {
+    console.log(beneficiary);
     const images = await beneficiaryImageService.getBeneficiaryImages(beneficiary.id);
     const image = images.length > 0 ? images[0] : null;
     const location = await townshipService.getTownshipById(beneficiary.city_id);
 
-    return { ...beneficiary, image, location };
+    return { ...beneficiary, image, location, is_user: false };
   }
 };
 

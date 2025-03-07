@@ -39,6 +39,55 @@ const createAppointment = async ({
   }
 };
 
+const createNewAppointment = async ({
+  user_id,
+  beneficiary_id,
+  specialty_id,
+  professional_id,
+  appointment_date,
+  appointment_time,
+  duration_minutes = 30,
+  status,
+  notes,
+  is_for_beneficiary,
+  first_time,
+  control,
+}) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const insertQuery = `
+      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id, appointment_date, appointment_time, duration_minutes, first_time, control)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`;
+    // Reordenamos los valores para que coincidan con la consulta:
+    const values = [
+      user_id,
+      beneficiary_id,
+      status,
+      notes,
+      is_for_beneficiary,
+      professional_id,
+      specialty_id,
+      appointment_date,
+      appointment_time,
+      duration_minutes,
+      first_time,
+      control,
+    ];
+
+    const result = await client.query(insertQuery, values);
+
+    await client.query('COMMIT');
+    return result.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+};
+
 
 // Obtener una cita por ID
 const getAppointment = async (id) => {
@@ -293,5 +342,6 @@ module.exports = {
   getAppointmentsForCallCenter,
   sendNotification,
   expireOldAppointments,
-  getAppointmentsByUserId
+  getAppointmentsByUserId,
+  createNewAppointment
 };

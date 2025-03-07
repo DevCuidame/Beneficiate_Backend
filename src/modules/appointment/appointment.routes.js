@@ -11,6 +11,7 @@ const {
   getAppointmentsByUser,
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
+  createNewAppointment
 } = require('./appointment.controller');
 const validate = require('../../middlewares/validate.middleware');
 const { appointmentSchema } = require('./appointment.validation');
@@ -20,6 +21,7 @@ router.get('/call-center', getAppointmentsForCallCenter);
 
 // Other specific routes
 router.post('/create', validate(appointmentSchema), createAppointment);
+router.post('/create-new', validate(appointmentSchema), createNewAppointment);
 router.get('/user/:user_id', getAppointmentsByUser);
 router.get('/beneficiary/:beneficiary_id', getAppointmentsByBeneficiary);
 router.put('/update/:id', validate(appointmentSchema), updateAppointment);
