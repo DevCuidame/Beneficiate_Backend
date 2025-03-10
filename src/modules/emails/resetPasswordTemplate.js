@@ -1,11 +1,12 @@
-// src/modules/emails/verifyEmailTemplate.js
-const verifyEmailTemplate = (name, verificationLink) => `
+// src/modules/emails/resetPasswordTemplate.js
+const resetPasswordTemplate = (name, resetLink) => 
+  `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verificación de Correo Electrónico</title>
+  <title>Restablecimiento de Contraseña</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -51,16 +52,16 @@ const verifyEmailTemplate = (name, verificationLink) => `
 <body>
   <div class="container">
     <div class="header">
-      <h1>Verificación de Correo Electrónico</h1>
+      <h1>Restablecimiento de Contraseña</h1>
     </div>
     <div class="content">
       <p>Hola ${name},</p>
-      <p>Gracias por registrarte en nuestra plataforma. Para activar tu cuenta, haz clic en el siguiente enlace:</p>
+      <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
       <p style="text-align: center;">
-        <a href="${verificationLink}" class="button">Verificar mi Correo</a>
+        <a href="${resetLink}" class="button">Restablecer Contraseña</a>
       </p>
-      <p>Este enlace expirará en 24 horas por razones de seguridad.</p>
-      <p>Si no has solicitado esta verificación, puedes ignorar este mensaje.</p>
+      <p>Este enlace expirará en 1 hora por razones de seguridad.</p>
+      <p>Si no has solicitado cambiar tu contraseña, puedes ignorar este mensaje y tu contraseña seguirá siendo la misma.</p>
       <p>Saludos,<br>El equipo de soporte</p>
     </div>
     <div class="footer">
@@ -71,4 +72,4 @@ const verifyEmailTemplate = (name, verificationLink) => `
 </html>
 `;
 
-module.exports = verifyEmailTemplate;
+module.exports = resetPasswordTemplate;

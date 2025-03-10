@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS public.beneficiaries (
     gender VARCHAR(30) NOT NULL,
     city_id BIGINT REFERENCES townships(id) ON DELETE RESTRICT,
     address VARCHAR(255) NOT NULL,
-    blood_type VARCHAR(35) NOT NULL,
+    blood_type VARCHAR(35),
     health_provider VARCHAR(50),
     prepaid_health VARCHAR(50),
     work_risk_insurance VARCHAR(50),
@@ -520,3 +520,48 @@ CREATE TABLE message_logs (
   sent_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE(user_id)
+);
+
+-- Índice para búsquedas rápidas de tokens
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
+-- Índice para búsquedas por usuario
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
+
+
+-- Schema para la tabla de tokens de verificación de correo electrónico
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE(user_id)
+);
+
+-- Índice para búsquedas rápidas de tokens
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token);
+
+-- Índice para búsquedas por usuario
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user_id ON email_verification_tokens(user_id);
+
+-- Asegurarse de que la tabla users tenga la columna verified
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'verified'
+  ) THEN
+    ALTER TABLE users ADD COLUMN verified BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+END
+$$;

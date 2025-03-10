@@ -149,7 +149,7 @@ const createBeneficiary = async (beneficiaryData) => {
   );
   if (existingBeneficiary) {
     throw new ValidationError(
-      'Parece que tienes un beneficiario con el mismo documento'
+      'Parece que tienes existe un beneficiario con el mismo documento'
     );
   }
 

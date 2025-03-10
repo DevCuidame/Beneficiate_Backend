@@ -12,6 +12,8 @@ const medicalSpecialitiesRoutes = require('./modules/medical_specialties/medical
 const authenticate = require('./middlewares/auth.middleware');
 const paymentsRoutes = require('./modules/payments/payments.routes');
 const plansRoutes = require('./modules/plans/plans.routes');
+const passwordResetRoutes = require('./modules/auth/password/password.reset.routes');
+const emailVerificationRoutes = require('./modules/auth/verification/email.verification.routes');
 
 const router = express.Router();
 
@@ -30,5 +32,7 @@ router.use('/medical-professionals', medicalProfessionalsRoutes);
 router.use('/medical-specialties', medicalSpecialitiesRoutes);
 router.use('/payments', paymentsRoutes);
 router.use('/plans', plansRoutes);
+router.use('/password', passwordResetRoutes);
+router.use('/email', emailVerificationRoutes);
 
 module.exports = router;

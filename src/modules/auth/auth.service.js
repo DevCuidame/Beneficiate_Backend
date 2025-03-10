@@ -7,10 +7,8 @@ const { buildImage } = require('../../utils/image.utils');
 const path = require('path');
 const imageRepository = require('../images/user/user.images.repository');
 const PATHS = require('../../config/paths');
-const emailService = require('../emails/email.service');
-
+const emailVerificationService = require('./verification/email.verification.service');
 const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
-
 
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');
@@ -39,6 +37,11 @@ const login = async (email, password) => {
   const user = await authRepository.findByEmail(email);
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new UnauthorizedError('Credenciales Inválidas');
+  }
+
+  // Verificar si el usuario ha verificado su correo
+  if (!user.verified) {
+    throw new UnauthorizedError('Por favor verifica tu correo electrónico antes de iniciar sesión');
   }
 
   let isAgent = false;
@@ -122,6 +125,13 @@ const register = async (userData) => {
 
   if (userData.base_64) {
     await processImage(newUser.id, userData.public_name, userData.base_64);
+  }
+  // Send verification email
+  try {
+    await emailVerificationService.sendVerificationEmail(newUser);
+  } catch (error) {
+    console.error('Error al enviar correo de verificación:', error.message);
+    // No lanzamos error para no detener el registro
   }
 
   return newUser;

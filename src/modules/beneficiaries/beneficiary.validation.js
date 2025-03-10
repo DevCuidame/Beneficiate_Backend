@@ -60,7 +60,7 @@ const beneficiarySchema = Joi.object({
     'any.required': 'La dirección es obligatoria',
     'string.empty': 'La dirección no puede estar vacía',
   }),
-  blood_type: Joi.string().max(35).required().messages({
+  blood_type: Joi.string().max(35).optional().allow('', null).messages({
     'string.max': 'El tipo de sangre no puede tener más de 35 caracteres',
     'any.required': 'El tipo de sangre es obligatorio',
     'string.empty': 'El tipo de sangre no puede estar vacío',
