@@ -55,7 +55,6 @@ const initializeWebSocket = (server) => {
           JSON.stringify({
             event: 'all_appointments',
             appointments,
-            message: 'Citas recuperadas exitosamente',
           })
         );
         ws.botState = null;

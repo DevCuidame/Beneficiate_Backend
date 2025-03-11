@@ -18,22 +18,19 @@ async function validateDocument(document, userId) {
   }
 
   const user = await userRepository.getUserByIdNum(document);
-  const beneficiaries = await beneficiaryRepository.findByIdentification(document);
+  const beneficiary  = await beneficiaryRepository.findByIdentification(document);
 
   if (user && user.identification_number === document) {
     const belongsTo = `${user.first_name.split(' ')[0]} ${user.last_name.split(' ')[0]}`;
     return { valid: true, belongsTo, type: 'user' };
   }
 
-  if (beneficiaries && beneficiaries.length > 0) {
-    const matchingBeneficiary = beneficiaries.find((b) => b.identification_number === document);
-    if (matchingBeneficiary) {
-      const belongsTo = `${matchingBeneficiary.first_name.split(' ')[0]} ${matchingBeneficiary.last_name.split(' ')[0]}`;
-      return { valid: true, belongsTo, type: 'beneficiary' };
-    }
+  if (beneficiary) {
+    const belongsTo = `${beneficiary.first_name.split(' ')[0]} ${beneficiary.last_name.split(' ')[0]}`;
+    return { valid: true, belongsTo, type: 'beneficiary' };
   }
 
-  return { valid: false, error: 'El documento no coincide con nuestros registros.' };
+  return { valid: false, error: 'El documento no coincide con nuestros registros. Intenta de nuevo.' };
 }
 
 function sendMessage(ws, message) {

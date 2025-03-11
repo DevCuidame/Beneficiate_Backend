@@ -491,7 +491,7 @@ CREATE TABLE IF NOT EXISTS public.medical_appointments (
     specialty_id INT NOT NULL REFERENCES medical_specialties(id) ON DELETE CASCADE,
     appointment_date TIMESTAMP,
     status appointment_status_enum DEFAULT 'PENDING',
-    appointment_time TIME NOT NULL,
+    appointment_time TIME,
     duration_minutes INT NOT NULL DEFAULT 30,
     notes TEXT,
     is_for_beneficiary BOOLEAN NOT NULL,
