@@ -10,21 +10,26 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const token = await authService.login(email, password);
-    
+
     if (!token) {
       throw new UnauthorizedError('Credenciales inválidas');
     }
 
     const user = await userService.findByEmail(email);
-    const beneficiaries = await beneficiaryService.getBeneficiariesByUser(user.id);
+    const beneficiaries = await beneficiaryService.getBeneficiariesByUser(
+      user.id
+    );
 
     let isAgent = false;
     let agentActive = false;
     try {
-      const agent = await callCenterAgentService.getCallCenterAgentByUserId(user.id);
+      const agent = await callCenterAgentService.getCallCenterAgentByUserId(
+        user.id
+      );
       if (agent) {
         isAgent = true;
-        agentActive = (agent.status === 'ACTIVE');
+        agentActive = agent.status === 'ACTIVE';
+        user.agentId = isAgent ? agent.id : null;
       }
     } catch (error) {
       isAgent = false;
@@ -40,9 +45,9 @@ const login = async (req, res) => {
   }
 };
 
-
 const refreshTokenController = async (req, res) => {
-  try {x
+  try {
+    x;
     const { refreshToken } = req.body;
     if (!refreshToken) {
       throw new ValidationError('Refresh Token es obligatorio');
@@ -54,8 +59,6 @@ const refreshTokenController = async (req, res) => {
     errorResponse(res, error);
   }
 };
-
-
 
 const register = async (req, res) => {
   try {

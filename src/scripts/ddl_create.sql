@@ -565,3 +565,55 @@ BEGIN
   END IF;
 END
 $$;
+
+
+-- Crear tabla para los chats entre agentes y usuarios
+CREATE TABLE agent_chats (
+    id SERIAL PRIMARY KEY,
+    agent_id INTEGER NOT NULL REFERENCES call_center_agents(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    last_message TEXT,
+    closed_by INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Crear índices para mejorar el rendimiento de las consultas
+CREATE INDEX idx_agent_chats_agent_id ON agent_chats(agent_id);
+CREATE INDEX idx_agent_chats_user_id ON agent_chats(user_id);
+CREATE INDEX idx_agent_chats_status ON agent_chats(status);
+
+-- Crear tabla para los mensajes de chat
+CREATE TABLE agent_chat_messages (
+    id SERIAL PRIMARY KEY,
+    chat_id INTEGER NOT NULL REFERENCES agent_chats(id) ON DELETE CASCADE,
+    sender_id INTEGER NOT NULL,
+    sender_type VARCHAR(10) NOT NULL CHECK (sender_type IN ('USER', 'AGENT', 'SYSTEM')),
+    message TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'SENT',
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Crear índices para la tabla de mensajes
+CREATE INDEX idx_agent_chat_messages_chat_id ON agent_chat_messages(chat_id);
+CREATE INDEX idx_agent_chat_messages_sender_id ON agent_chat_messages(sender_id);
+CREATE INDEX idx_agent_chat_messages_sent_at ON agent_chat_messages(sent_at);
+
+-- Añadir columna last_seen a la tabla users para tracking de usuarios en línea
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS online_status BOOLEAN DEFAULT FALSE;
+
+-- Comentarios de las tablas
+COMMENT ON TABLE agent_chats IS 'Almacena las conversaciones entre agentes del call center y usuarios';
+COMMENT ON TABLE agent_chat_messages IS 'Almacena los mensajes individuales enviados en los chats de agentes';
+COMMENT ON COLUMN agent_chats.agent_id IS 'ID del agente de call center';
+COMMENT ON COLUMN agent_chats.user_id IS 'ID del usuario cliente';
+COMMENT ON COLUMN agent_chats.status IS 'Estado del chat: ACTIVE, CLOSED';
+COMMENT ON COLUMN agent_chats.last_message IS 'Último mensaje enviado en el chat';
+COMMENT ON COLUMN agent_chats.closed_by IS 'ID del usuario o agente que cerró el chat';
+COMMENT ON COLUMN agent_chat_messages.sender_id IS 'ID del remitente del mensaje';
+COMMENT ON COLUMN agent_chat_messages.sender_type IS 'Tipo de remitente: USER, AGENT o SYSTEM';
+COMMENT ON COLUMN agent_chat_messages.status IS 'Estado del mensaje: SENT, DELIVERED, READ';
+COMMENT ON COLUMN users.last_seen IS 'Última vez que el usuario estuvo activo';
+COMMENT ON COLUMN users.online_status IS 'Indica si el usuario está actualmente en línea';

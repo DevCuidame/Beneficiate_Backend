@@ -52,7 +52,7 @@ const login = async (email, password) => {
     );
     if (agent) {
       isAgent = true;
-      agentActive = agent.status === 'ACTIVE';
+      agentActive = false;
     }
   } catch (error) {
     isAgent = false;

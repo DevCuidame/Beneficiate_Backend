@@ -41,7 +41,7 @@ function sendMessage(ws, message) {
 
 async function handleChatbotFlow(ws, data) {
   try {
-    if (data.event && data.event === 'init') {
+    if (data.event && data.event === 'init' || data.event === 'chatbot_init') {
       ws.professionalId = data.professionalId;
       console.log(data.professionalId);
       console.log("Professional ID set to:", ws.professionalId);
