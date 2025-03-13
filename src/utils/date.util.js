@@ -59,6 +59,33 @@ const formatAppointmentTime = (timeString) => {
   return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
+// Function to format time with AM/PM
+const formatAppointmentTimeChat = (data, fields = ['sent_at']) => {
+  if (!data) return data;
+  
+  const formattedData = { ...data };
+  
+  fields.forEach(field => {
+    if (formattedData[field]) {
+      const date = new Date(formattedData[field]);
+      
+      // Add a formatted_time field
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12; // Convert to 12-hour format
+      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+      
+      formattedData.formatted_time = `${formattedHours}:${formattedMinutes} ${ampm}`;
+      
+      // Keep the original date object
+      formattedData[field] = date;
+    }
+  });
+  
+  return formattedData;
+};
+
 // Función para obtener el día de la semana en español (ej.: "Viernes")
 const getDayName = (dateString) => {
   if (!dateString) return '';
@@ -69,4 +96,4 @@ const getDayName = (dateString) => {
 };
 
 
-module.exports = { formatDate, formatDatesInData, formatAppointmentDate, formatAppointmentTime, getDayName };
+module.exports = { formatDate, formatDatesInData, formatAppointmentDate, formatAppointmentTime, getDayName, formatAppointmentTimeChat };

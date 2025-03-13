@@ -41,12 +41,10 @@ const saveRefreshToken = async (userId, token) => {
 };
 
 const findRefreshToken = async (userId, token) => {
-  console.log("🔍 Buscando refresh token en la base de datos:", userId, token);
   const result = await pool.query(
     'SELECT token FROM refresh_tokens WHERE user_id = $1 AND token = $2',
     [userId, token]
   );
-  console.log("🔍 Resultado de la consulta:", result.rowCount);
   return result.rowCount > 0;
 };
 

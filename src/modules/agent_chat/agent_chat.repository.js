@@ -1,6 +1,6 @@
 // src/modules/agent_chat/agent_chat.repository.js
 const pool = require('../../config/connection');
-const { formatDatesInData } = require('../../utils/date.util');
+const { formatAppointmentTimeChat } = require('../../utils/date.util');
 
 /**
  * Crea un nuevo chat entre un agente y un usuario
@@ -25,7 +25,7 @@ const createChat = async (chatData) => {
   
   try {
     const result = await pool.query(query, values);
-    return formatDatesInData(result.rows[0], ['created_at', 'updated_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al crear chat:', error);
     throw error;
@@ -48,7 +48,7 @@ const findChatById = async (chat_id) => {
     if (result.rows.length === 0) {
       return null;
     }
-    return formatDatesInData(result.rows[0], ['created_at', 'updated_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al buscar chat por ID:', error);
     throw error;
@@ -72,7 +72,7 @@ const findChatsByAgentId = async (agent_id) => {
   try {
     const result = await pool.query(query, [agent_id]);
     return result.rows.map(row => 
-      formatDatesInData(row, ['created_at', 'updated_at'])
+      formatAppointmentTimeChat(row, ['sent_at'])
     );
   } catch (error) {
     console.error('Error al buscar chats por agente:', error);
@@ -100,7 +100,7 @@ const findChatsByUserId = async (user_id) => {
   try {
     const result = await pool.query(query, [user_id]);
     return result.rows.map(row => 
-      formatDatesInData(row, ['created_at', 'updated_at'])
+      formatAppointmentTimeChat(row, ['sent_at'])
     );
   } catch (error) {
     console.error('Error al buscar chats por usuario:', error);
@@ -125,7 +125,7 @@ const findActiveChatBetweenAgentAndUser = async (agent_id, user_id) => {
     if (result.rows.length === 0) {
       return null;
     }
-    return formatDatesInData(result.rows[0], ['created_at', 'updated_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al buscar chat activo:', error);
     throw error;
@@ -172,7 +172,7 @@ const updateChat = async (chat_id, updateData) => {
     if (result.rows.length === 0) {
       throw new Error('Chat no encontrado');
     }
-    return formatDatesInData(result.rows[0], ['created_at', 'updated_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al actualizar chat:', error);
     throw error;
@@ -194,7 +194,7 @@ const createMessage = async (messageData) => {
       sender_type,
       message,
       status,
-      sent_at
+      sent_at 
     ) VALUES ($1, $2, $3, $4, $5, NOW())
     RETURNING *
   `;
@@ -203,7 +203,7 @@ const createMessage = async (messageData) => {
   
   try {
     const result = await pool.query(query, values);
-    return formatDatesInData(result.rows[0], ['sent_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al crear mensaje:', error);
     throw error;
@@ -224,7 +224,7 @@ const findMessagesByChatId = async (chat_id) => {
   
   try {
     const result = await pool.query(query, [chat_id]);
-    return result.rows.map(row => formatDatesInData(row, ['sent_at']));
+    return result.rows.map(row => formatAppointmentTimeChat(row, ['sent_at']));
   } catch (error) {
     console.error('Error al buscar mensajes del chat:', error);
     throw error;
@@ -249,7 +249,7 @@ const getLastMessageFromChat = async (chat_id) => {
     if (result.rows.length === 0) {
       return null;
     }
-    return formatDatesInData(result.rows[0], ['sent_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al obtener último mensaje:', error);
     throw error;
@@ -270,7 +270,7 @@ const findOnlineUsers = async () => {
   
   try {
     const result = await pool.query(query);
-    return result.rows.map(row => formatDatesInData(row, ['last_seen']));
+    return result.rows.map(row => formatAppointmentTimeChat(row, ['last_seen']));
   } catch (error) {
     console.error('Error al buscar usuarios en línea:', error);
     throw error;
@@ -296,7 +296,7 @@ const updateMessageStatus = async (message_id, status) => {
     if (result.rows.length === 0) {
       throw new Error('Mensaje no encontrado');
     }
-    return formatDatesInData(result.rows[0], ['sent_at']);
+    return formatAppointmentTimeChat(result.rows[0], ['sent_at']);
   } catch (error) {
     console.error('Error al actualizar estado del mensaje:', error);
     throw error;

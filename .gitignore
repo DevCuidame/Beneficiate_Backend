@@ -2,7 +2,7 @@
 # Node
 /node_modules
 # /src/uploads
-
+/coverage
 
 # Visual Studio Code
 .vscode/*

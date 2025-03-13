@@ -5,6 +5,7 @@ const callCenterAgentService = require('../call_center_agents/call_center_agents
 const { NotFoundError, ValidationError } = require('../../core/errors');
 // Import the event bus instead of the websocket module directly
 const websocketEvents = require('../websocket/websocket-events');
+const formatAppointmentTime = require('../../utils/date.util');
 
 /**
  * Inicia un nuevo chat entre un agente y un usuario
@@ -20,10 +21,8 @@ const initiateChat = async (agent_id, user_id) => {
     if (!agent) {
       throw new NotFoundError('Agente no encontrado');
     }
-    console.log(user_id);
     // Validar que el usuario existe
     const user = await userService.getUserById(user_id);
-    console.log('🚀 ~ initiateChat ~ user:', user);
     if (!user) {
       throw new NotFoundError('Usuario no encontrado');
     }
@@ -67,6 +66,12 @@ const initiateChat = async (agent_id, user_id) => {
     return {
       ...newChat,
       welcome_message: welcomeMessage,
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email
+      }
     };
   } catch (error) {
     console.error('Error al iniciar chat:', error);
@@ -116,7 +121,6 @@ const getUserChats = async (user_id) => {
   try {
     const chats = await agentChatRepository.findChatsByUserId(user_id);
 
-    // Enriquecer los datos de cada chat con información del usuario
     const enrichedChats = await Promise.all(
       chats.map(async (chat) => {
         const user = await userService.getUserById(chat.user_id);
