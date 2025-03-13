@@ -509,6 +509,7 @@ const broadcastMessage = async (chat_id, message) => {
  * @param {WebSocket} ws - Conexión WebSocket
  * @param {Object} data - Datos recibidos
  */
+
 const handleCloseChat = async (ws, data) => {
   if (!data.chat_id || !data.closed_by) {
     ws.send(JSON.stringify({
