@@ -52,7 +52,6 @@ const formatAppointmentDate = (dateString) => {
 // Función para formatear la hora: "08:00 a.m."
 const formatAppointmentTime = (timeString) => {
   if (!timeString) return '';
-  // Se asume que timeString viene en formato "HH:MM:SS"
   const [hours, minutes, seconds] = timeString.split(':');
   const date = new Date();
   date.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds || '0'));
@@ -69,7 +68,6 @@ const formatAppointmentTimeChat = (data, fields = ['sent_at']) => {
     if (formattedData[field]) {
       const date = new Date(formattedData[field]);
       
-      // Add a formatted_time field
       const hours = date.getHours();
       const minutes = date.getMinutes();
       const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -78,7 +76,6 @@ const formatAppointmentTimeChat = (data, fields = ['sent_at']) => {
       
       formattedData.formatted_time = `${formattedHours}:${formattedMinutes} ${ampm}`;
       
-      // Keep the original date object
       formattedData[field] = date;
     }
   });
@@ -86,12 +83,10 @@ const formatAppointmentTimeChat = (data, fields = ['sent_at']) => {
   return formattedData;
 };
 
-// Función para obtener el día de la semana en español (ej.: "Viernes")
 const getDayName = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   let dayName = date.toLocaleDateString('es-ES', { weekday: 'long' });
-  // Capitaliza la primera letra
   return dayName.charAt(0).toUpperCase() + dayName.slice(1);
 };
 

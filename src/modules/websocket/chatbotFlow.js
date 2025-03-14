@@ -30,11 +30,24 @@ async function validateDocument(document, userId) {
   }
 
   if (beneficiary) {
+    if (beneficiary.user_id !== userId) {
+      return {
+        valid: false,
+        error: 'Solo puede agendar citas para sus propios beneficiarios.',
+      };
+    }
+    
     const belongsTo = `${beneficiary.first_name.split(' ')[0]} ${
       beneficiary.last_name.split(' ')[0]
     }`;
-    return { valid: true, belongsTo, type: 'beneficiary' };
+    return { 
+      valid: true, 
+      belongsTo, 
+      type: 'beneficiary', 
+      id: beneficiary.id 
+    };
   }
+
 
   return {
     valid: false,

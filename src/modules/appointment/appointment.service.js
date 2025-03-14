@@ -1,6 +1,11 @@
 const appointmentRepository = require('./appointment.repository');
 const { NotFoundError, ValidationError } = require('../../core/errors');
-const { formatDatesInData, formatAppointmentDate, formatAppointmentTime, getDayName } = require('../../utils/date.util');
+const {
+  formatDatesInData,
+  formatAppointmentDate,
+  formatAppointmentTime,
+  getDayName,
+} = require('../../utils/date.util');
 const userService = require('../users/user.service');
 const planService = require('../plans/plan.service');
 const beneficiaryService = require('../beneficiaries/beneficiary.service');
@@ -15,7 +20,6 @@ const {
   generateCancellationMessage,
   generateRescheduleMessage,
 } = require('../../utils/whatsapp.messages');
-
 
 const createAppointment = async (appointmentData) => {
   let {
@@ -143,16 +147,16 @@ const getAppointmentById = async (id) => {
 const createNewAppointment = async (appointmentData) => {
   try {
     // Eliminar el id cero y otros campos innecesarios
-    const { 
-      id, 
-      created_at, 
-      created_at_formatted, 
+    const {
+      id,
+      created_at,
+      created_at_formatted,
       professionalData,
       specialtyData,
       userData,
-      ...validAppointmentData 
+      ...validAppointmentData
     } = appointmentData;
-    
+
     // Asegurarse de que los IDs son números
     const appointmentToCreate = {
       ...validAppointmentData,
@@ -161,18 +165,28 @@ const createNewAppointment = async (appointmentData) => {
       professional_id: Number(validAppointmentData.professional_id),
       specialty_id: Number(validAppointmentData.specialty_id),
     };
-    
+
     // Crear la cita en la base de datos
-    const appointment = await appointmentRepository.createNewAppointment(appointmentToCreate);
-    
+    const appointment = await appointmentRepository.createNewAppointment(
+      appointmentToCreate
+    );
+
     // Enriquecer la cita con datos adicionales
-    const formattedAppointment = formatDatesInData(appointment, ['appointment_date']);
-    formattedAppointment.created_at_formatted = formatDateTime(formattedAppointment.created_at);
-    
+    const formattedAppointment = formatDatesInData(appointment, [
+      'appointment_date',
+    ]);
+    formattedAppointment.created_at_formatted = formatDateTime(
+      formattedAppointment.created_at
+    );
+
     // Agregar datos del usuario o beneficiario
     if (formattedAppointment.is_for_beneficiary) {
-      let beneficiary = await beneficiaryService.getBeneficiaryById(formattedAppointment.beneficiary_id);
-      const images = await beneficiaryImage.getBeneficiaryImages(beneficiary.id);
+      let beneficiary = await beneficiaryService.getBeneficiaryById(
+        formattedAppointment.beneficiary_id
+      );
+      const images = await beneficiaryImage.getBeneficiaryImages(
+        beneficiary.id
+      );
       beneficiary = {
         ...beneficiary,
         image: images.length > 0 ? images[0] : null,
@@ -184,17 +198,19 @@ const createNewAppointment = async (appointmentData) => {
       user = { ...user, image: images.length > 0 ? images[0] : null };
       formattedAppointment.userData = user;
     }
-    
+
     // Agregar datos del profesional
     if (formattedAppointment.professional_id) {
       const professional = await professionalService.getMedicalProfessionalById(
         formattedAppointment.professional_id
       );
-      const professionalUser = await userService.getUserById(professional.user_id);
+      const professionalUser = await userService.getUserById(
+        professional.user_id
+      );
       formattedAppointment.professionalData = professional;
       formattedAppointment.professionalData.user = professionalUser;
     }
-    
+
     // Agregar datos de la especialidad
     if (formattedAppointment.specialty_id) {
       const specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(
@@ -202,7 +218,7 @@ const createNewAppointment = async (appointmentData) => {
       );
       formattedAppointment.specialtyData = specialty;
     }
-    
+
     return formattedAppointment;
   } catch (error) {
     console.error('Error en createNewAppointment:', error);
@@ -211,7 +227,6 @@ const createNewAppointment = async (appointmentData) => {
 };
 
 const updateAppointment = async (id, data) => {
-
   const updatedAppointment = await appointmentRepository.updateAppointment(
     id,
     data
@@ -221,11 +236,12 @@ const updateAppointment = async (id, data) => {
     updatedAppointment.professional_id
   );
   const doctorBasicData = userService.getUserById(doctor.user_id);
-  const doctorName = doctorBasicData?.first_name + ' ' + doctorBasicData?.user?.last_name;
+  const doctorName =
+    doctorBasicData?.first_name + ' ' + doctorBasicData?.user?.last_name;
   const doctorPhone = doctorBasicData?.phone;
 
-  const date = updatedAppointment.appointment_date;
-  const time = updatedAppointment.appointment_time;
+  const date = formatAppointmentDate(updatedAppointment.appointment_date);
+  const time = formatAppointmentTime(updatedAppointment.appointment_date);
 
   if (updatedAppointment.status === 'CONFIRMED') {
     if (updatedAppointment.is_for_beneficiary) {
@@ -393,15 +409,23 @@ const getAllAppointments = async () => {
       }
 
       if (formattedAppointment.professional_id) {
-        const professional = await professionalService.getMedicalProfessionalById(formattedAppointment.professional_id);
-        const professionalUser = await userService.getUserById(professional.user_id);
+        const professional =
+          await professionalService.getMedicalProfessionalById(
+            formattedAppointment.professional_id
+          );
+        const professionalUser = await userService.getUserById(
+          professional.user_id
+        );
         formattedAppointment.professionalData = professional;
         formattedAppointment.professionalData.user = professionalUser;
       }
 
       // Obtener datos de la especialidad médica
       if (formattedAppointment.specialty_id) {
-        const specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(formattedAppointment.specialty_id);
+        const specialty =
+          await medicalSpecialtiesService.getMedicalSpecialtyById(
+            formattedAppointment.specialty_id
+          );
         formattedAppointment.specialtyData = specialty;
       }
 
@@ -475,7 +499,6 @@ const getAppointmentsForCallCenter = async (filter) => {
   };
 };
 
-
 const getAppointmentsByUserId = async (id) => {
   const appointments = await appointmentRepository.getAppointmentsByUserId(id);
   if (!appointments || appointments.length === 0) {
@@ -485,7 +508,9 @@ const getAppointmentsByUserId = async (id) => {
   const formattedAppointments = await Promise.all(
     appointments.map(async (appointment) => {
       // Formatear la fecha base (puedes conservar otros formatos si ya usas formatDatesInData)
-      const formattedAppointment = formatDatesInData(appointment, ['appointment_date']);
+      const formattedAppointment = formatDatesInData(appointment, [
+        'appointment_date',
+      ]);
 
       // Agregar información del usuario (quien agenda la cita)
       let user = await userService.getUserById(formattedAppointment.user_id);
@@ -495,47 +520,66 @@ const getAppointmentsByUserId = async (id) => {
 
       // Agregar información del beneficiario (si existe)
       if (formattedAppointment.beneficiary_id) {
-        let beneficiary = await beneficiaryService.getBeneficiaryById(formattedAppointment.beneficiary_id);
-        const beneficiaryImages = await beneficiaryImage.getBeneficiaryImages(beneficiary.id);
-        beneficiary = { ...beneficiary, image: beneficiaryImages.length > 0 ? beneficiaryImages[0] : null };
+        let beneficiary = await beneficiaryService.getBeneficiaryById(
+          formattedAppointment.beneficiary_id
+        );
+        const beneficiaryImages = await beneficiaryImage.getBeneficiaryImages(
+          beneficiary.id
+        );
+        beneficiary = {
+          ...beneficiary,
+          image: beneficiaryImages.length > 0 ? beneficiaryImages[0] : null,
+        };
         formattedAppointment.beneficiaryData = beneficiary;
       }
 
       // Agregar información del profesional (si existe)
       if (formattedAppointment.professional_id) {
-        let professional = await professionalService.getMedicalProfessionalById(formattedAppointment.professional_id);
-        professional = await professionalService.enrichProfessionalWithData(professional);
-        let professionalUser = await userService.getUserById(professional.user_id);
+        let professional = await professionalService.getMedicalProfessionalById(
+          formattedAppointment.professional_id
+        );
+        professional = await professionalService.enrichProfessionalWithData(
+          professional
+        );
+        let professionalUser = await userService.getUserById(
+          professional.user_id
+        );
         professionalUser = { ...professionalUser };
 
-        formattedAppointment.professionalData = { 
+        formattedAppointment.professionalData = {
           ...professional,
-          user: professionalUser
+          user: professionalUser,
         };
       }
 
       // Agregar formatos para appointment_date, appointment_time y el día de la semana
-      formattedAppointment.appointment_date_formatted = formatAppointmentDate(formattedAppointment.appointment_date);
-      formattedAppointment.appointment_time_formatted = formatAppointmentTime(formattedAppointment.appointment_time);
-      formattedAppointment.day = getDayName(formattedAppointment.appointment_date);
+      formattedAppointment.appointment_date_formatted = formatAppointmentDate(
+        formattedAppointment.appointment_date
+      );
+      formattedAppointment.appointment_time_formatted = formatAppointmentTime(
+        formattedAppointment.appointment_time
+      );
+      formattedAppointment.day = getDayName(
+        formattedAppointment.appointment_date
+      );
 
       // Agregar nombre de la especialidad, si existe specialty_id
       if (formattedAppointment.specialty_id) {
-        let specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(formattedAppointment.specialty_id);
+        let specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(
+          formattedAppointment.specialty_id
+        );
         formattedAppointment.specialty_name = specialty.name.toUpperCase();
       }
 
-      formattedAppointment.created_at_formatted = formatDateTime(formattedAppointment.created_at);
+      formattedAppointment.created_at_formatted = formatDateTime(
+        formattedAppointment.created_at
+      );
       return formattedAppointment;
     })
   );
 
   return formattedAppointments;
 };
-
-
-
-
 
 module.exports = {
   createAppointment,
@@ -548,6 +592,5 @@ module.exports = {
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
   getAppointmentsByUserId,
-  createNewAppointment
-  
+  createNewAppointment,
 };
