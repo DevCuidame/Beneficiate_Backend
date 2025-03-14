@@ -1,20 +1,76 @@
-const generateConfirmationMessage = (doctorName, date, time, recipientName) =>
-  `📅 Estimado ${recipientName}, su cita con el Dr. ${doctorName} ha sido confirmada para el ${date} a las ${time}. ¡Gracias por confiar en nosotros!`;
+// whatsapp.messages.js - Updated version
+const generateConfirmationMessage = (doctorName, date, time, recipientName) => {
+  // For approved template messages, we need to use this format
+  return {
+    template: 'appointment_confirmation',
+    language: 'es', // Spanish
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: recipientName },
+          { type: 'text', text: doctorName },
+          { type: 'text', text: date },
+          { type: 'text', text: time }
+        ]
+      }
+    ]
+  };
+};
 
-const generateCancellationMessage = (doctorName, date, recipientName) =>
-  `❌ Estimado ${recipientName}, lamentamos informarle que su cita con el Dr. ${doctorName} el ${date} ha sido cancelada.`;
+const generateCancellationMessage = (doctorName, date, recipientName) => {
+  return {
+    template: 'appointment_cancellation',
+    language: 'es',
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: recipientName },
+          { type: 'text', text: doctorName },
+          { type: 'text', text: date }
+        ]
+      }
+    ]
+  };
+};
 
-const generateRescheduleMessage = (
-  doctorName,
-  oldDate,
-  newDate,
-  time,
-  recipientName
-) =>
-  `🔄 Estimado ${recipientName}, su cita con el Dr. ${doctorName} ha sido reprogramada. Nueva fecha: ${newDate} a las ${time} (antes: ${oldDate}).`;
+const generateRescheduleMessage = (doctorName, oldDate, newDate, time, recipientName) => {
+  return {
+    template: 'appointment_rescheduled',
+    language: 'es',
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: recipientName },
+          { type: 'text', text: doctorName },
+          { type: 'text', text: newDate },
+          { type: 'text', text: time },
+          { type: 'text', text: oldDate }
+        ]
+      }
+    ]
+  };
+};
 
-const generateReminderMessage = (doctorName, date, time, recipientName) =>
-  `⏳ Recordatorio: Estimado ${recipientName}, tiene una cita con el Dr. ${doctorName} el ${date} a las ${time}. No olvide asistir.`;
+const generateReminderMessage = (doctorName, date, time, recipientName) => {
+  return {
+    template: 'appointment_reminder',
+    language: 'es',
+    components: [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: recipientName },
+          { type: 'text', text: doctorName },
+          { type: 'text', text: date },
+          { type: 'text', text: time }
+        ]
+      }
+    ]
+  };
+};
 
 module.exports = {
   generateConfirmationMessage,

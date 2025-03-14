@@ -18,19 +18,28 @@ async function validateDocument(document, userId) {
   }
 
   const user = await userRepository.getUserByIdNum(document);
-  const beneficiary  = await beneficiaryRepository.findByIdentification(document);
+  const beneficiary = await beneficiaryRepository.findByIdentification(
+    document
+  );
 
   if (user && user.identification_number === document) {
-    const belongsTo = `${user.first_name.split(' ')[0]} ${user.last_name.split(' ')[0]}`;
+    const belongsTo = `${user.first_name.split(' ')[0]} ${
+      user.last_name.split(' ')[0]
+    }`;
     return { valid: true, belongsTo, type: 'user' };
   }
 
   if (beneficiary) {
-    const belongsTo = `${beneficiary.first_name.split(' ')[0]} ${beneficiary.last_name.split(' ')[0]}`;
+    const belongsTo = `${beneficiary.first_name.split(' ')[0]} ${
+      beneficiary.last_name.split(' ')[0]
+    }`;
     return { valid: true, belongsTo, type: 'beneficiary' };
   }
 
-  return { valid: false, error: 'El documento no coincide con nuestros registros. Intenta de nuevo.' };
+  return {
+    valid: false,
+    error: 'El documento no coincide con nuestros registros. Intenta de nuevo.',
+  };
 }
 
 function sendMessage(ws, message) {
@@ -41,10 +50,11 @@ function sendMessage(ws, message) {
 
 async function handleChatbotFlow(ws, data) {
   try {
-    if (data.event && data.event === 'init' || data.event === 'chatbot_init') {
+    if (
+      (data.event && data.event === 'init') ||
+      data.event === 'chatbot_init'
+    ) {
       ws.professionalId = data.professionalId;
-      console.log(data.professionalId);
-      console.log("Professional ID set to:", ws.professionalId);
       if (!ws.botState) {
         ws.botState = STATES.AWAITING_DOCUMENT;
         const welcomeMsg = {
@@ -55,13 +65,9 @@ async function handleChatbotFlow(ws, data) {
           professionalId: ws.professionalId,
         };
         sendMessage(ws, welcomeMsg);
-        console.log("Chatbot welcome message sent:", welcomeMsg.message);
       }
       return;
     }
-
-    // Log general de estado en cada paso
-    console.log("Estado actual:", ws.botState, "ws.professionalId:", ws.professionalId, "ws.flowData:", ws.flowData);
 
     switch (ws.botState) {
       case STATES.AWAITING_DOCUMENT: {
@@ -77,7 +83,6 @@ async function handleChatbotFlow(ws, data) {
         }
 
         const specialties = await medicalSpecialtiesService.getAll();
-        console.log("Lista de especialidades:", specialties); // Log para depuración
 
         sendMessage(ws, {
           event: 'chatbot_message',
@@ -98,9 +103,6 @@ async function handleChatbotFlow(ws, data) {
             specialty.name.toLowerCase() === selectedSpecialtyName.toLowerCase()
         );
 
-        console.log("Especialidad seleccionada:", selectedSpecialtyName);
-        console.log("Especialidad encontrada:", specialtyFound);
-
         if (!specialtyFound) {
           sendMessage(ws, {
             event: 'chatbot_message',
@@ -115,11 +117,11 @@ async function handleChatbotFlow(ws, data) {
         ws.flowData = ws.flowData || {};
         ws.flowData.specialty = specialtyFound.name;
         ws.flowData.specialty_id = specialtyFound.id;
-        console.log("ws.flowData después de asignar especialidad:", ws.flowData);
 
         sendMessage(ws, {
           event: 'chatbot_message',
-          message: 'Gracias. Ahora, por favor, brinde una descripción detallada de su motivo de consulta.',
+          message:
+            'Gracias. Ahora, por favor, brinde una descripción detallada de su motivo de consulta.',
           sender_type: 'BOT',
         });
 
@@ -132,7 +134,8 @@ async function handleChatbotFlow(ws, data) {
         ws.flowData.consultReason = consultReason;
         sendMessage(ws, {
           event: 'chatbot_message',
-          message: 'Gracias. Ahora, por favor, brinde una descripción detallada de su motivo de consulta.',
+          message:
+            'Gracias. Ahora, por favor, brinde una descripción detallada de su motivo de consulta.',
           sender_type: 'BOT',
         });
         ws.botState = STATES.AWAITING_DESCRIPTION;
@@ -144,10 +147,12 @@ async function handleChatbotFlow(ws, data) {
         ws.flowData.description = description;
         sendMessage(ws, {
           event: 'chatbot_message',
-          message: `Resumen de su consulta:\n- Motivo: ${ws.flowData.consultReason || ''}\n- Descripción: ${description}\n¿Desea confirmar el agendamiento de su cita? (si/no)`,
+          message: `Resumen de su consulta:\n- Motivo: ${
+            ws.flowData.consultReason || ''
+          }\n- Descripción: ${description}\n¿Desea confirmar el agendamiento de su cita? (si/no)`,
           sender_type: 'BOT',
           list: true,
-          options: ['si', 'no']
+          options: ['si', 'no'],
         });
         ws.botState = STATES.CONFIRMATION;
         break;
@@ -166,22 +171,23 @@ async function handleChatbotFlow(ws, data) {
             is_for_beneficiary: ws.flowData.is_for_beneficiary || false,
           };
 
-          console.log("Datos de la cita a guardar:", appointmentData);
-
           try {
-            const scheduled = await appointmentService.createAppointment(appointmentData);
-            console.log('🚀 ~ handleChatbotFlow ~ scheduled:', scheduled);
+            const scheduled = await appointmentService.createAppointment(
+              appointmentData
+            );
             sendMessage(ws, {
               event: 'chatbot_message',
-              message: 'Su cita ha sido recibida. Nos pondremos en contacto una vez tengas disponibilidad. ¡Gracias por utilizar nuestro servicio!',
+              message:
+                'Su cita ha sido recibida. Nos pondremos en contacto una vez tengas disponibilidad. ¡Gracias por utilizar nuestro servicio!',
               sender_type: 'BOT',
-              redirectUrl: '/home'
+              redirectUrl: '/home',
             });
           } catch (error) {
             console.error('Error al guardar la cita:', error);
             sendMessage(ws, {
               event: 'chatbot_message',
-              message: 'Ocurrió un error al guardar su cita. Por favor, intente nuevamente más tarde.',
+              message:
+                'Ocurrió un error al guardar su cita. Por favor, intente nuevamente más tarde.',
               sender_type: 'BOT',
             });
           }
@@ -189,7 +195,8 @@ async function handleChatbotFlow(ws, data) {
         } else if (confirmation === 'no') {
           sendMessage(ws, {
             event: 'chatbot_message',
-            message: 'Entendido. Si necesita más ayuda, puede iniciar un nuevo flujo de consulta. ¡Gracias!',
+            message:
+              'Entendido. Si necesita más ayuda, puede iniciar un nuevo flujo de consulta. ¡Gracias!',
             sender_type: 'BOT',
           });
           ws.botState = STATES.COMPLETED;
@@ -197,10 +204,11 @@ async function handleChatbotFlow(ws, data) {
           // Agregamos las opciones seleccionables "si" y "no"
           sendMessage(ws, {
             event: 'chatbot_message',
-            message: 'No he entendido su respuesta. Por favor, confirme si desea agendar la cita respondiendo "si" o "no".',
+            message:
+              'No he entendido su respuesta. Por favor, confirme si desea agendar la cita respondiendo "si" o "no".',
             sender_type: 'BOT',
             list: true,
-            options: ['si', 'no']
+            options: ['si', 'no'],
           });
         }
         break;
@@ -208,7 +216,8 @@ async function handleChatbotFlow(ws, data) {
       default: {
         sendMessage(ws, {
           event: 'chatbot_message',
-          message: 'Ha ocurrido un error en el flujo del chatbot. Reiniciando el proceso...',
+          message:
+            'Ha ocurrido un error en el flujo del chatbot. Reiniciando el proceso...',
           sender_type: 'BOT',
           shouldRestartFlow: true,
         });

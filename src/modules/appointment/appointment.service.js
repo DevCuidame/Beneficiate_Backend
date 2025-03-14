@@ -228,7 +228,6 @@ const updateAppointment = async (id, data) => {
   const time = updatedAppointment.appointment_time;
 
   if (updatedAppointment.status === 'CONFIRMED') {
-    // 📌 Generar mensaje de confirmación
     if (updatedAppointment.is_for_beneficiary) {
       const beneficiary = await beneficiaryService.getBeneficiaryById(
         updatedAppointment.beneficiary_id

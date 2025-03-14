@@ -25,6 +25,7 @@ const initializeWebSocket = (server) => {
     token = token.split(', ')[1] || token;
     try {
       const user = jwt.verifyToken(token, process.env.JWT_SECRET);
+      console.log("🚀 ~ server.on ~ user:", user)
       request.user = user;
       wss.handleUpgrade(request, socket, head, (ws) => {
         ws.user = user;
@@ -56,7 +57,6 @@ const initializeWebSocket = (server) => {
             isAgent = true;
             ws.agent = agent;
 
-            // Si ya existe una conexión para este agente, cerrarla
             const existingConnection = agentClients.get(agent.id);
             if (existingConnection && existingConnection !== ws) {
               existingConnection.close();
@@ -140,7 +140,7 @@ const initializeWebSocket = (server) => {
       }
 
       // Código para chatbot o citas
-      if (user.isAgent && user.agentActive) {
+      if (user.isAgent) {
         try {
           const appointments = await appointmentService.getAllAppointments();
           ws.send(
@@ -175,7 +175,6 @@ const initializeWebSocket = (server) => {
         const data = JSON.parse(message);
 
         if (data.source === 'chatbot') {
-          console.log('Mensaje recibido del chatbot:', data);
           await chatbotFlow.handleChatbotFlow(ws, data);
           return;
         }
@@ -183,10 +182,6 @@ const initializeWebSocket = (server) => {
         // Handle different message types based on the event
         switch (data.event) {
           case 'chatbot_init':
-            console.log(
-              'Inicializando chatbot con professionalId:',
-              data.professionalId
-            );
             ws.professionalId = data.professionalId;
             await chatbotFlow.handleChatbotFlow(ws, {
               event: 'init',
@@ -352,8 +347,6 @@ const handleAgentChatMessage = async (ws, data) => {
       message: messageObject,
     };
 
-    console.log('Sending message payload:', messagePayload);
-
     // Get the chat to find both participants
     const chat = await agentChatService.findChatById(chat_id);
     if (chat) {
@@ -399,7 +392,9 @@ const handleInitiateAgentChat = async (ws, data) => {
     // Iniciar chat mediante el servicio
     const chat = await agentChatService.initiateChat(ws.agent.id, user_id);
     const user = await userRepository.getUserById(user_id);
-    const agent = await callCenterAgentService.getCallCenterAgentById(ws.agent.id);
+    const agent = await callCenterAgentService.getCallCenterAgentById(
+      ws.agent.id
+    );
 
     const enrichedChat = {
       ...chat,
@@ -412,8 +407,8 @@ const handleInitiateAgentChat = async (ws, data) => {
       agent: agent || {
         id: ws.agent.id,
         agent_code: 'AG' + ws.agent.id,
-        status: 'ACTIVE'
-      }
+        status: 'ACTIVE',
+      },
     };
 
     // Notificar al agente
@@ -434,7 +429,6 @@ const handleInitiateAgentChat = async (ws, data) => {
         })
       );
     }
-    
   } catch (error) {
     console.error('Error iniciando chat de agente:', error);
     ws.send(
@@ -484,7 +478,6 @@ const broadcastMessage = async (chat_id, message) => {
       message: messageObject,
     };
 
-    console.log('Broadcasting message:', eventPayload);
 
     // Enviar al usuario
     const userClient = clients.get(chat.user_id);
@@ -502,7 +495,6 @@ const broadcastMessage = async (chat_id, message) => {
   }
 };
 
-
 // Primero agrega esta función junto a las otras funciones de manejo de eventos
 /**
  * Maneja el cierre de un chat
@@ -512,25 +504,30 @@ const broadcastMessage = async (chat_id, message) => {
 
 const handleCloseChat = async (ws, data) => {
   if (!data.chat_id || !data.closed_by) {
-    ws.send(JSON.stringify({
-      event: 'error',
-      message: 'Se requieren chat_id y closed_by'
-    }));
+    ws.send(
+      JSON.stringify({
+        event: 'error',
+        message: 'Se requieren chat_id y closed_by',
+      })
+    );
     return;
   }
-  
+
   try {
-    const result = await agentChatService.closeChat(data.chat_id, data.closed_by);
+    const result = await agentChatService.closeChat(
+      data.chat_id,
+      data.closed_by
+    );
   } catch (error) {
     console.error('Error al cerrar chat:', error);
-    ws.send(JSON.stringify({
-      event: 'error',
-      message: 'Error al cerrar el chat: ' + error.message
-    }));
+    ws.send(
+      JSON.stringify({
+        event: 'error',
+        message: 'Error al cerrar el chat: ' + error.message,
+      })
+    );
   }
 };
-
-
 
 const notifyTyping = (chat_id, user_id) => {
   clients.forEach((client) => {
