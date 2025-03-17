@@ -619,4 +619,5 @@ module.exports = {
   clients,
   agentClients,
   onlineUsers,
+  broadcastAppointment,
 };
