@@ -173,7 +173,6 @@ const createHealthData = async (req, res) => {
       }
     }
 
-    // Obtener todos los registros actualizados y ordenarlos
     const updatedDiseases = await service.getByBeneficiaryIdOrdered('beneficiary_diseases', beneficiaryId, 'diagnosed_date');
     const updatedDisabilities = await service.getByBeneficiaryIdOrdered('beneficiary_disabilities', beneficiaryId, 'diagnosed_date');
     const updatedDistinctives = await service.getByBeneficiaryIdOrdered('beneficiary_distinctives', beneficiaryId, 'created_at');

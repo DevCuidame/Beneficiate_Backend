@@ -3,6 +3,7 @@ const { ValidationError, NotFoundError } = require('../../core/errors');
 const { formatDatesInData } = require('../../utils/date.util');
 
 const createRecord = async (table, data) => {
+  console.log("🚀 ~ createRecord ~ data:", data)
   return await repository.createRecord(table, data);
 };
 

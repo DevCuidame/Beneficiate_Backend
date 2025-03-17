@@ -17,9 +17,9 @@ const beneficiaryDiseaseSchema = Joi.object({
   diagnosed_date: Joi.date().optional().messages({
     'date.base': 'La fecha de diagnóstico debe ser una fecha válida',
   }),
-  treatment_required: Joi.boolean().default(false).messages({
+  treatment_required: Joi.boolean().strict().messages({
     'boolean.base': 'El campo de tratamiento requerido debe ser verdadero o falso',
-  }),
+  })
 });
 
 module.exports = { beneficiaryDiseaseSchema };

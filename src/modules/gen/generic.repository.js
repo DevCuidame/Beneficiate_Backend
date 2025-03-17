@@ -2,15 +2,21 @@ const pool = require('../../config/connection');
 const { formatDatesInData } = require('../../utils/date.util'); 
 
 const createRecord = async (table, data) => {
-  const columns = Object.keys(data).join(', ');
-  const values = Object.values(data);
+  const dataToInsert = {...data};
+  
+  if (table === 'beneficiary_diseases' && 'treatment_required' in dataToInsert) {
+    dataToInsert.treatment_required = !!dataToInsert.treatment_required;
+  }
+  
+  const columns = Object.keys(dataToInsert).join(', ');
+  const values = Object.values(dataToInsert);
   const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-
+  
   const query = `INSERT INTO ${table} (${columns}, created_at, updated_at) VALUES (${placeholders}, NOW(), NOW()) RETURNING *`;
+  
   const result = await pool.query(query, values);
   return formatDatesInData(result.rows[0]);
 };
-
 const findById = async (table, id) => {
   const result = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [id]);
   return formatDatesInData(result.rows[0]);
