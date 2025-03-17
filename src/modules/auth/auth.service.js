@@ -34,6 +34,8 @@ const processImage = async (id, publicName, base64) => {
 };
 
 const login = async (email, password) => {
+  email = email.toLowerCase();
+
   const user = await authRepository.findByEmail(email);
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new UnauthorizedError('Credenciales Inválidas');
@@ -98,13 +100,14 @@ const refreshToken = async (token) => {
 };
 
 const register = async (userData) => {
+  userData.email = userData.email.toLowerCase();
   const existingUser = await authRepository.findByEmail(userData.email);
   if (existingUser) {
     throw new ValidationError('No logramos registrar tu email');
   }
 
   const existingIdentification = await authRepository.findByIdentification(
-    userData.identification
+    userData.identification_number
   );
   if (existingIdentification) {
     throw new ValidationError(
