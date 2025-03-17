@@ -161,7 +161,11 @@ const createNewAppointment = async (appointmentData) => {
     const appointmentToCreate = {
       ...validAppointmentData,
       user_id: Number(validAppointmentData.user_id),
-      beneficiary_id: Number(validAppointmentData.beneficiary_id),
+      beneficiary_id:
+        !validAppointmentData.is_for_beneficiary ||
+        !validAppointmentData.beneficiary_id
+          ? null
+          : Number(validAppointmentData.beneficiary_id),
       professional_id: Number(validAppointmentData.professional_id),
       specialty_id: Number(validAppointmentData.specialty_id),
     };
