@@ -50,7 +50,7 @@ const createNewAppointment = async ({
   status,
   notes,
   is_for_beneficiary,
-  first_time,
+  firsttime,
   control,
 }) => {
   const client = await pool.connect();
@@ -58,7 +58,7 @@ const createNewAppointment = async ({
     await client.query('BEGIN');
 
     const insertQuery = `
-      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id, appointment_date, appointment_time, duration_minutes, first_time, control)
+      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id, appointment_date, appointment_time, duration_minutes, firsttime, control)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`;
     // Reordenamos los valores para que coincidan con la consulta:
     const values = [
@@ -72,7 +72,7 @@ const createNewAppointment = async ({
       appointment_date,
       appointment_time,
       duration_minutes,
-      first_time,
+      firsttime,
       control,
     ];
 
@@ -116,7 +116,7 @@ const updateAppointment = async (id, data) => {
     professional_id,
     specialty_id,
     is_for_beneficiary,
-    first_time,
+    firsttime,
     control,
   } = data;
   
@@ -164,9 +164,9 @@ const updateAppointment = async (id, data) => {
     values.push(is_for_beneficiary);
     idx++;
   }
-  if (first_time !== undefined) {
-    setClauses.push(`first_time = $${idx}`);
-    values.push(first_time);
+  if (firsttime !== undefined) {
+    setClauses.push(`firsttime = $${idx}`);
+    values.push(firsttime);
     idx++;
   }
 

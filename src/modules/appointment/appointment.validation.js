@@ -8,7 +8,7 @@ const appointmentSchema = Joi.object({
     'number.base': 'El ID del usuario es requerido',
     'any.required': 'El ID del usuario es obligatorio',
   }),
-  beneficiary_id: Joi.number().optional().allow(null).messages({
+  beneficiary_id: Joi.any().optional().allow(null).messages({
     'number.base': 'El ID del beneficiario debe ser un número',
   }),
 
