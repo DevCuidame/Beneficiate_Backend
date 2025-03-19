@@ -24,8 +24,48 @@ const initializeWebSocket = (server) => {
     }
     token = token.split(', ')[1] || token;
     try {
-      const user = jwt.verifyToken(token, process.env.JWT_SECRET);
-      console.log("🚀 ~ server.on ~ user:", user)
+      const decodedToken = jwt.verifyToken(token, process.env.JWT_SECRET);
+      if (!decodedToken || !decodedToken.id) {
+        socket.destroy();
+        return;
+      }
+
+      // Obtener datos actualizados del usuario desde la base de datos
+      const userData = await userRepository.getUserById(decodedToken.id);
+      if (!userData) {
+        console.error(`Usuario no encontrado en BD: ${decodedToken.id}`);
+        socket.destroy();
+        return;
+      }
+
+      // Verificar si el usuario es un agente y si está activo
+      let isAgent = false;
+      let agentData = null;
+      let agentActive = false;
+
+      try {
+        // Intentar obtener datos del agente si existe
+        agentData = await callCenterAgentService.getCallCenterAgentByUserId(
+          userData.id
+        );
+        if (agentData) {
+          isAgent = true;
+          agentActive = agentData.status === 'ACTIVE';
+        }
+      } catch (agentError) {
+        // Si hay error al buscar el agente, asumimos que no es un agente
+        console.log(
+          `Usuario ${userData.id} no es un agente o hubo un error al verificar`
+        );
+      }
+
+      const user = {
+        ...userData,
+        isAgent,
+        agentActive,
+        agentId: agentData?.id || null,
+      };
+
       request.user = user;
       wss.handleUpgrade(request, socket, head, (ws) => {
         ws.user = user;
@@ -37,22 +77,23 @@ const initializeWebSocket = (server) => {
   });
 
   wss.on('connection', async (ws, req) => {
-    if (!req.user) {
+    const user = req.user;
+
+    if (!user) {
       ws.close();
       return;
     }
 
     try {
-      const user = req.user;
       ws.user = user;
       let isAgent = false;
 
       // Verificar si el usuario es un agente de call center
       if (user.isAgent) {
         try {
-          const agent = await callCenterAgentService.getCallCenterAgentByUserId(
-            user.id
-          );
+          const agent = user.agentData || await callCenterAgentService.getCallCenterAgentById(user.agentId);
+          ws.agent = agent;
+          
           if (agent && agent.status === 'ACTIVE') {
             isAgent = true;
             ws.agent = agent;
@@ -477,7 +518,6 @@ const broadcastMessage = async (chat_id, message) => {
       chat_id: chat_id,
       message: messageObject,
     };
-
 
     // Enviar al usuario
     const userClient = clients.get(chat.user_id);

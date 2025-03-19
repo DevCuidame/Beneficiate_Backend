@@ -2,7 +2,6 @@ const appointmentService = require('./appointment.service');
 const { successResponse, errorResponse } = require('../../core/responses');
 const { broadcastAppointment } = require('../../modules/websocket/websocket');
 
-
 const createAppointment = async (req, res) => {
   try {
     const appointment = await appointmentService.createAppointment(req.body);
@@ -15,7 +14,6 @@ const createAppointment = async (req, res) => {
     errorResponse(res, error);
   }
 };
-
 
 const createNewAppointment = async (req, res) => {
   try {
@@ -32,18 +30,27 @@ const createNewAppointment = async (req, res) => {
 
 const createPendingAppointment = async (req, res) => {
   try {
-    const appointment = await appointmentService.createNewAppointment(req.body);
+    const appointmentData = { ...req.body };
+    
+    if (appointmentData.appointment_date === '') {
+      appointmentData.appointment_date = null;
+    }
+
+    if (appointmentData.appointment_time === '') {
+      appointmentData.appointment_time = null;
+    }
+
+    const appointment = await appointmentService.createNewAppointment(appointmentData);
 
     if (appointment) {
       broadcastAppointment(appointment);
     }
+    
     successResponse(res, appointment, 'Cita creada exitosamente');
   } catch (error) {
     errorResponse(res, error);
   }
 };
-
-
 
 const getAppointmentById = async (req, res) => {
   try {
@@ -65,7 +72,36 @@ const updateAppointment = async (req, res) => {
     );
     successResponse(res, updatedAppointment, 'Cita actualizada exitosamente');
   } catch (error) {
-    console.log("🚀 ~ updateAppointment ~ error:", error)
+    errorResponse(res, error);
+  }
+};
+
+
+const updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status) {
+      return errorResponse(res, { 
+        message: 'El estado de la cita es requerido', 
+        statusCode: 400 
+      });
+    }
+    
+    const validStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'TO_BE_CONFIRMED', 'COMPLETED', 'EXPIRED'];
+    if (!validStatuses.includes(status)) {
+      return errorResponse(res, { 
+        message: `Estado inválido. Debe ser uno de: ${validStatuses.join(', ')}`, 
+        statusCode: 400 
+      });
+    }
+    
+    const updatedAppointment = await appointmentService.updateAppointmentStatus(id, status);
+    
+    successResponse(res, updatedAppointment, 'Estado de cita actualizado exitosamente');
+  } catch (error) {
+    console.error("Error al actualizar estado de cita:", error);
     errorResponse(res, error);
   }
 };
@@ -139,7 +175,6 @@ const getAppointmentsByBeneficiary = async (req, res) => {
 
 const getAppointmentsForCallCenter = async (req, res) => {
   try {
-
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
@@ -158,7 +193,6 @@ const getAppointmentsForCallCenter = async (req, res) => {
       page,
       limit,
     };
-
 
     const appointments = await appointmentService.getAppointmentsForCallCenter(
       filters
@@ -187,5 +221,6 @@ module.exports = {
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
   createNewAppointment,
-  createPendingAppointment
+  createPendingAppointment,
+  updateAppointmentStatus
 };

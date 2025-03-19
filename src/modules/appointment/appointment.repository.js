@@ -105,7 +105,6 @@ const getAppointmentsByUserId = async (id) => {
 
 // Actualizar una cita
 const updateAppointment = async (id, data) => {
-  console.log("🚀 ~ updateAppointment ~ data:", data)
   const {
     appointment_date,
     appointment_time,

@@ -49,13 +49,36 @@ const formatAppointmentDate = (dateString) => {
   return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-// Función para formatear la hora: "08:00 a.m."
 const formatAppointmentTime = (timeString) => {
-  if (!timeString) return '';
-  const [hours, minutes, seconds] = timeString.split(':');
-  const date = new Date();
-  date.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds || '0'));
-  return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
+  if (!timeString || typeof timeString !== 'string') {
+    console.log('formatAppointmentTime recibió un valor no válido:', timeString);
+    return '';
+  }
+  
+  try {
+    const timeParts = timeString.split(':');
+    
+    if (timeParts.length < 2) {
+      console.log('formatAppointmentTime: formato de hora inválido:', timeString);
+      return timeString; 
+    }
+    
+    const hours = parseInt(timeParts[0]);
+    const minutes = parseInt(timeParts[1]);
+    const seconds = timeParts.length > 2 ? parseInt(timeParts[2]) : 0;
+    
+    const date = new Date();
+    date.setHours(hours, minutes, seconds);
+    
+    return date.toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: true 
+    });
+  } catch (error) {
+    console.error('Error al formatear la hora:', error, timeString);
+    return timeString; 
+  }
 };
 
 // Function to format time with AM/PM

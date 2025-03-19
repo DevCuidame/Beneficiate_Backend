@@ -12,7 +12,8 @@ const {
   getAppointmentsByBeneficiary,
   getAppointmentsForCallCenter,
   createNewAppointment,
-  createPendingAppointment
+  createPendingAppointment,
+  updateAppointmentStatus
 } = require('./appointment.controller');
 const validate = require('../../middlewares/validate.middleware');
 const { appointmentSchema } = require('./appointment.validation');
@@ -32,6 +33,7 @@ router.delete('/cancel/:id', cancelAppointment);
 
 // Generic parameter route should come last
 router.get('/:id', getAppointmentById);
+router.put('/status/:id', updateAppointmentStatus);
 
 // Root route
 router.get('/', getAllAppointments);
