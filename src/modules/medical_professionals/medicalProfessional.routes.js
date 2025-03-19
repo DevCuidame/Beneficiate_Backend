@@ -7,7 +7,8 @@ const {
   updateMedicalProfessional,
   deleteMedicalProfessional,
   getAll,
-  getMedicalProfessionalsBySpecialtyId
+  getMedicalProfessionalsBySpecialtyId,
+  updateScheduleType
 } = require('./medicalProfessional.controller');
 const validate = require('../../middlewares/validate.middleware');
 const { medicalProfessionalSchema } = require('./medicalProfessional.validation');
@@ -21,6 +22,7 @@ router.put('/update/:id', validate(medicalProfessionalSchema), updateMedicalProf
 router.delete('/remove/:id', deleteMedicalProfessional);
 
 router.get('/specialty/:specialty_id', getMedicalProfessionalsBySpecialtyId);
+router.put('/schedule-type/:id', updateScheduleType);
 
 
 module.exports = router;

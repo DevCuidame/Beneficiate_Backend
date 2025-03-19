@@ -230,6 +230,90 @@ const createNewAppointment = async (appointmentData) => {
   }
 };
 
+const createPendingAppointment = async (appointmentData) => {
+  try {
+    const {
+      id,
+      created_at,
+      created_at_formatted,
+      professionalData,
+      specialtyData,
+      userData,
+      ...validAppointmentData
+    } = appointmentData;
+
+    const appointmentToCreate = {
+      ...validAppointmentData,
+      user_id: Number(validAppointmentData.user_id),
+      beneficiary_id:
+        !validAppointmentData.is_for_beneficiary ||
+        !validAppointmentData.beneficiary_id
+          ? null
+          : Number(validAppointmentData.beneficiary_id),
+      professional_id: Number(validAppointmentData.professional_id),
+      specialty_id: Number(validAppointmentData.specialty_id),
+    };
+
+    // Crear la cita en la base de datos
+    const appointment = await appointmentRepository.createNewAppointment(
+      appointmentToCreate
+    );
+
+    // Enriquecer la cita con datos adicionales
+    const formattedAppointment = formatDatesInData(appointment, [
+      'appointment_date',
+    ]);
+    formattedAppointment.created_at_formatted = formatDateTime(
+      formattedAppointment.created_at
+    );
+
+    // Agregar datos del usuario o beneficiario
+    if (formattedAppointment.is_for_beneficiary) {
+      let beneficiary = await beneficiaryService.getBeneficiaryById(
+        formattedAppointment.beneficiary_id
+      );
+      const images = await beneficiaryImage.getBeneficiaryImages(
+        beneficiary.id
+      );
+      beneficiary = {
+        ...beneficiary,
+        image: images.length > 0 ? images[0] : null,
+      };
+      formattedAppointment.userData = beneficiary;
+    } else {
+      let user = await userService.getUserById(formattedAppointment.user_id);
+      const images = await userImage.getUserImages(user.id);
+      user = { ...user, image: images.length > 0 ? images[0] : null };
+      formattedAppointment.userData = user;
+    }
+
+    // Agregar datos del profesional
+    if (formattedAppointment.professional_id) {
+      const professional = await professionalService.getMedicalProfessionalById(
+        formattedAppointment.professional_id
+      );
+      const professionalUser = await userService.getUserById(
+        professional.user_id
+      );
+      formattedAppointment.professionalData = professional;
+      formattedAppointment.professionalData.user = professionalUser;
+    }
+
+    // Agregar datos de la especialidad
+    if (formattedAppointment.specialty_id) {
+      const specialty = await medicalSpecialtiesService.getMedicalSpecialtyById(
+        formattedAppointment.specialty_id
+      );
+      formattedAppointment.specialtyData = specialty;
+    }
+
+    return formattedAppointment;
+  } catch (error) {
+    console.error('Error en createNewAppointment:', error);
+    throw error;
+  }
+};
+
 const updateAppointment = async (id, data) => {
   const updatedAppointment = await appointmentRepository.updateAppointment(
     id,
@@ -597,4 +681,5 @@ module.exports = {
   getAppointmentsForCallCenter,
   getAppointmentsByUserId,
   createNewAppointment,
+  createPendingAppointment
 };

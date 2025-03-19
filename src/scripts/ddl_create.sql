@@ -10,7 +10,7 @@ END $$;
 -- Crear ENUM para status de citas médicas
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'appointment_status_enum') THEN
-        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'TO_BE_CONFIRMED', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'EXPIRED');
+        CREATE TYPE appointment_status_enum AS ENUM ('PENDING', 'TO_BE_CONFIRMED', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'EXPIRED', 'ATTENDED');
     END IF;
 END $$;
 
@@ -603,6 +603,19 @@ CREATE INDEX idx_agent_chat_messages_sent_at ON agent_chat_messages(sent_at);
 -- Añadir columna last_seen a la tabla users para tracking de usuarios en línea
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS online_status BOOLEAN DEFAULT FALSE;
+
+-- Añadir el campo schedule_type a la tabla medical_professionals
+ALTER TABLE medical_professionals 
+ADD COLUMN schedule_type VARCHAR(20) NOT NULL DEFAULT 'UNAVAILABLE';
+
+ALTER TABLE medical_professionals 
+ADD CONSTRAINT schedule_type_check 
+CHECK (schedule_type IN ('ONLINE', 'MANUAL', 'UNAVAILABLE'));
+
+COMMENT ON COLUMN medical_professionals.schedule_type IS 'Tipo de agenda del profesional: ONLINE (agenda en línea disponible), MANUAL (agenda manual), UNAVAILABLE (agenda no disponible)';
+
+-- Por defecto, establecemos todos a 'UNAVAILABLE' hasta que se configure manualmente
+UPDATE medical_professionals SET schedule_type = 'UNAVAILABLE';
 
 -- Comentarios de las tablas
 COMMENT ON TABLE agent_chats IS 'Almacena las conversaciones entre agentes del call center y usuarios';

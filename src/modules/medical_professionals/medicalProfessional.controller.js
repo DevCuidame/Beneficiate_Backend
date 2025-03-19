@@ -70,6 +70,49 @@ const getMedicalProfessionalsBySpecialtyId = async (req, res) => {
   }
 };
 
+const getProfessionalsByScheduleType = async (req, res) => {
+  try {
+    const { scheduleType } = req.params;
+    
+    if (!['ONLINE', 'MANUAL', 'UNAVAILABLE', 'ALL'].includes(scheduleType)) {
+      return errorResponse(res, { 
+        message: 'Tipo de agenda inválido. Debe ser ONLINE, MANUAL, UNAVAILABLE o ALL', 
+        statusCode: 400 
+      });
+    }
+    
+    let professionals;
+    if (scheduleType === 'ALL') {
+      professionals = await medicalProfessionalService.getAll();
+    } else {
+      professionals = await medicalProfessionalService.getProfessionalsByScheduleType(scheduleType);
+    }
+    
+    successResponse(res, professionals, `Profesionales con agenda ${scheduleType} recuperados exitosamente`);
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
+const updateScheduleType = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { scheduleType } = req.body;
+    
+    if (!scheduleType || !['ONLINE', 'MANUAL', 'UNAVAILABLE'].includes(scheduleType)) {
+      return errorResponse(res, { 
+        message: 'Tipo de agenda inválido. Debe ser ONLINE, MANUAL o UNAVAILABLE', 
+        statusCode: 400 
+      });
+    }
+    
+    const updatedProfessional = await medicalProfessionalService.updateProfessionalScheduleType(id, scheduleType);
+    successResponse(res, updatedProfessional, 'Tipo de agenda actualizado exitosamente');
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
 
 module.exports = {
   getMedicalProfessionalById,
@@ -78,5 +121,7 @@ module.exports = {
   updateMedicalProfessional,
   deleteMedicalProfessional,
   getAll,
-  getMedicalProfessionalsBySpecialtyId
+  getMedicalProfessionalsBySpecialtyId,
+  getProfessionalsByScheduleType,
+  updateScheduleType
 };

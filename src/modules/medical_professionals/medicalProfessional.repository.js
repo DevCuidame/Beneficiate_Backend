@@ -55,6 +55,7 @@ const createMedicalProfessional = async (professionalData) => {
     consultation_schedule,
     consultation_modes,
     weekly_availability,
+    schedule_type,
     created_at,
   } = professionalData;
 
@@ -75,9 +76,10 @@ const createMedicalProfessional = async (professionalData) => {
       consultation_schedule,
       consultation_modes,
       weekly_availability,
+      schedule_type,
       created_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
     RETURNING *;
   `;
 
@@ -97,6 +99,7 @@ const createMedicalProfessional = async (professionalData) => {
     consultation_schedule,
     consultation_modes,
     weekly_availability,
+    schedule_type || 'UNAVAILABLE',
     created_at,
   ];
 
@@ -120,6 +123,7 @@ const updateMedicalProfessional = async (id, professionalData) => {
     consultation_schedule,
     consultation_modes,
     weekly_availability,
+    schedule_type, 
   } = professionalData;
 
   const query = `
@@ -138,7 +142,8 @@ const updateMedicalProfessional = async (id, professionalData) => {
       consultation_schedule = $112,
       consultation_modes = $13,
       weekly_availability = $14
-    WHERE id = $15
+      schedule_type = $15
+    WHERE id = $16
     RETURNING *;
   `;
 
@@ -157,10 +162,27 @@ const updateMedicalProfessional = async (id, professionalData) => {
     consultation_schedule,
     consultation_modes,
     weekly_availability,
+    schedule_type, 
     id,
   ];
 
   const result = await pool.query(query, values);
+  return result.rows[0];
+};
+
+const updateProfessionalScheduleType = async (id, scheduleType) => {
+  if (!['ONLINE', 'MANUAL', 'UNAVAILABLE'].includes(scheduleType)) {
+    throw new Error('Tipo de agenda inválido. Debe ser ONLINE, MANUAL o UNAVAILABLE');
+  }
+  
+  const query = `
+    UPDATE medical_professionals 
+    SET schedule_type = $1
+    WHERE id = $2
+    RETURNING *;
+  `;
+  
+  const result = await pool.query(query, [scheduleType, id]);
   return result.rows[0];
 };
 
@@ -170,6 +192,17 @@ const deleteMedicalProfessional = async (id) => {
   return { message: 'Medical professional deleted successfully' };
 };
 
+const getProfessionalsByScheduleType = async (scheduleType) => {
+  const query = `
+    SELECT * FROM medical_professionals 
+    WHERE schedule_type = $1
+  `;
+  
+  const result = await pool.query(query, [scheduleType]);
+  return result.rows || [];
+};
+
+
 module.exports = {
   findMedicalProfessionalById,
   findMedicalProfessionalByUserId,
@@ -177,5 +210,7 @@ module.exports = {
   updateMedicalProfessional,
   deleteMedicalProfessional,
   getAll,
-  getMedicalProfessionalsBySpecialtyId
+  getMedicalProfessionalsBySpecialtyId,
+  updateProfessionalScheduleType,
+  getProfessionalsByScheduleType
 };

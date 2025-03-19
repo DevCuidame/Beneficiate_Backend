@@ -80,9 +80,22 @@ const medicalProfessionalSchema = Joi.object({
     'string.max': 'La disponibilidad semanal no puede tener más de 255 caracteres',
   }),
 
+  schedule_type: Joi.string().valid('ONLINE', 'MANUAL', 'UNAVAILABLE').optional().messages({
+    'any.only': 'El tipo de agenda debe ser ONLINE, MANUAL o UNAVAILABLE',
+    'string.empty': 'El tipo de agenda no puede estar vacío',
+  }),
+
   created_at: Joi.date().optional().messages({
     'date.base': 'La fecha de creación debe ser una fecha válida',
   }),
 });
 
-module.exports = { medicalProfessionalSchema };
+const scheduleTypeSchema = Joi.object({
+  scheduleType: Joi.string().valid('ONLINE', 'MANUAL', 'UNAVAILABLE').required().messages({
+    'any.only': 'El tipo de agenda debe ser ONLINE, MANUAL o UNAVAILABLE',
+    'any.required': 'El tipo de agenda es obligatorio',
+    'string.empty': 'El tipo de agenda no puede estar vacío',
+  })
+});
+
+module.exports = { medicalProfessionalSchema, scheduleTypeSchema };
