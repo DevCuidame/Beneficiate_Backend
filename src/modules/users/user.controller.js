@@ -5,6 +5,8 @@ const { buildImage } = require('../../utils/image.utils');
 const path = require('path');
 const imageRepository = require('../images/user/user.images.repository');
 const PATHS = require('../../config/paths');
+const userService = require('./user.service');
+
 
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');

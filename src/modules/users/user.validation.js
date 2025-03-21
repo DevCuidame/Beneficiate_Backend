@@ -48,3 +48,7 @@ const userUpdateSchema = Joi.object({
       'string.base': 'La imagen debe ser una cadena en formato Base64'
     })
   });
+
+  module.exports = {
+    userUpdateSchema
+  };
