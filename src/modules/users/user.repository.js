@@ -215,6 +215,57 @@ const verifyUser = async (userId) => {
   return result.rows[0];
 };
 
+
+const updateUser = async (id, userData) => {
+  // Campos que se pueden actualizar
+  const allowedFields = [
+    'first_name',
+    'last_name',
+    'identification_type',
+    'identification_number',
+    'phone',
+    'address',
+    'city_id',
+    'gender',
+    'birth_date',
+  ];
+
+  // Filtrar solo los campos permitidos que existen en userData
+  const fieldsToUpdate = Object.keys(userData)
+    .filter(field => allowedFields.includes(field) && userData[field] !== undefined);
+
+  if (fieldsToUpdate.length === 0) {
+    throw new Error('No hay campos válidos para actualizar');
+  }
+
+  // Construir la consulta SQL dinámicamente
+  const setClauses = fieldsToUpdate.map((field, index) => `${field} = $${index + 1}`);
+  const values = fieldsToUpdate.map(field => userData[field]);
+
+  // Añadir el ID como último parámetro
+  values.push(id);
+
+  const query = `
+    UPDATE users 
+    SET ${setClauses.join(', ')}, updated_at = NOW() 
+    WHERE id = $${values.length} 
+    RETURNING *
+  `;
+
+  try {
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Usuario no encontrado');
+    }
+    
+    return formatDatesInData(result.rows[0], ['birth_date', 'created_at', 'updated_at']);
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   findByIdentification,
   findByEmail,
@@ -232,4 +283,5 @@ module.exports = {
   checkVerificationToken,
   invalidateVerificationToken,
   verifyUser,
+  updateUser
 };

@@ -5,6 +5,8 @@ const beneficiaryImageService = require('../images/beneficiary/beneficiary.image
 const townshipService = require('../township/township.service');
 const { NotFoundError } = require('../../core/errors');
 const beneficiaryRepository = require('../beneficiaries/beneficiary.repository');
+const userHealthData = require('../users/health/user.health.service');
+
 const findByEmail = async (email) => {
   const user = await userRepository.findByEmail(email);
 
@@ -16,8 +18,9 @@ const findByEmail = async (email) => {
   const images = await imageService.getUserImages(user.id);
   const image = images.length > 0 ? images[0] : null;
   const location = await townshipService.getTownshipById(user.city_id);
+  const healthData = await userHealthData.getUserHealthData(user.id);
 
-  return { ...user, plan, image, location };
+  return { ...user, plan, image, location, healthData };
 };
 
 const getUserById = async (id) => {

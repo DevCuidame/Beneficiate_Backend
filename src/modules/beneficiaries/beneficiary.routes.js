@@ -33,8 +33,6 @@ router.post('/create', validate(beneficiarySchema), createBeneficiary);
 router.put('/update/:id', validate(beneficiarySchema), updateBeneficiary);
 router.delete('/remove/:id', removeBeneficiary);
 
-// Adapting to Frontend 
-
 router.post('/history/create', validate(medicalAndFamilyHistorySchema), createMedicalFamilyHistory);
 router.post('/health-data/create', validate(healthDataSchema), createHealthData);
 router.post('/allergies-medications/create', validate(allergiesAndMedicationsSchema), createAllergiesAndMedications);
