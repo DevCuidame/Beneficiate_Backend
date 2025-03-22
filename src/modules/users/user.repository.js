@@ -14,7 +14,7 @@ const findByTypeIdentification = async (
   identification_number
 ) => {
   const result = await pool.query(
-    'SELECT * FROM users WHERE identification_type = $1 AND identification_number = $2',
+    'SELECT id, first_name, last_name, identification_type, identification_number, address, city_id, phone, gender, birth_date, email, verified, created_at, plan_id FROM users WHERE identification_type = $1 AND identification_number = $2',
     [identification_type, identification_number]
   );
 
@@ -22,13 +22,19 @@ const findByTypeIdentification = async (
 };
 
 const getUserById = async (id) => {
-  const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-  return result.rows[0];
+  const result = await pool.query(
+    'SELECT id, first_name, last_name, identification_type, identification_number, address, city_id, phone, gender, birth_date, email, verified, created_at, plan_id FROM users WHERE id = $1',
+    [id]
+  );
+  return formatDatesInData(result.rows[0] || null, [
+    'birth_date',
+    'created_at',
+  ]);
 };
 
 const getUserByIdNum = async (id) => {
   const result = await pool.query(
-    'SELECT * FROM users WHERE identification_number = $1',
+    'SELECT id, first_name, last_name, identification_type, identification_number, address, city_id, phone, gender, birth_date, email, verified, created_at, plan_id FROM users WHERE identification_number = $1',
     [id]
   );
   return result.rows[0];
@@ -152,7 +158,6 @@ const updatePassword = async (userId, newPassword) => {
   return result.rows[0];
 };
 
-
 /**
  * Guarda un token de verificación para un usuario
  * @param {number} userId - ID del usuario
@@ -181,7 +186,7 @@ const checkVerificationToken = async (userId, token) => {
      WHERE user_id = $1 AND token = $2 AND expires_at > NOW() AND used = FALSE`,
     [userId, token]
   );
-  
+
   return result.rows.length > 0;
 };
 
@@ -211,10 +216,9 @@ const verifyUser = async (userId) => {
      RETURNING id, email, first_name, last_name, verified`,
     [userId]
   );
-  
+
   return result.rows[0];
 };
-
 
 const updateUser = async (id, userData) => {
   // Campos que se pueden actualizar
@@ -231,35 +235,42 @@ const updateUser = async (id, userData) => {
   ];
 
   // Filtrar solo los campos permitidos que existen en userData
-  const fieldsToUpdate = Object.keys(userData)
-    .filter(field => allowedFields.includes(field) && userData[field] !== undefined);
+  const fieldsToUpdate = Object.keys(userData).filter(
+    (field) => allowedFields.includes(field) && userData[field] !== undefined
+  );
 
   if (fieldsToUpdate.length === 0) {
     throw new Error('No hay campos válidos para actualizar');
   }
 
   // Construir la consulta SQL dinámicamente
-  const setClauses = fieldsToUpdate.map((field, index) => `${field} = $${index + 1}`);
-  const values = fieldsToUpdate.map(field => userData[field]);
+  const setClauses = fieldsToUpdate.map(
+    (field, index) => `${field} = $${index + 1}`
+  );
+  const values = fieldsToUpdate.map((field) => userData[field]);
 
   // Añadir el ID como último parámetro
   values.push(id);
 
   const query = `
     UPDATE users 
-    SET ${setClauses.join(', ')}, updated_at = NOW() 
+    SET ${setClauses.join(', ')}
     WHERE id = $${values.length} 
     RETURNING *
   `;
 
   try {
     const result = await pool.query(query, values);
-    
+
     if (result.rows.length === 0) {
       throw new Error('Usuario no encontrado');
     }
-    
-    return formatDatesInData(result.rows[0], ['birth_date', 'created_at', 'updated_at']);
+
+    return formatDatesInData(result.rows[0], [
+      'birth_date',
+      'created_at',
+      'updated_at',
+    ]);
   } catch (error) {
     console.error('Error al actualizar usuario:', error);
     throw error;
@@ -283,5 +294,5 @@ module.exports = {
   checkVerificationToken,
   invalidateVerificationToken,
   verifyUser,
-  updateUser
+  updateUser,
 };

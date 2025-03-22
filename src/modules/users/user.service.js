@@ -30,7 +30,13 @@ const getUserById = async (id) => {
     throw new NotFoundError('Usuario no encontrado');
   }
 
-  return user;
+  const plan = await planService.getPlanById(user.plan_id);
+  const images = await imageService.getUserImages(user.id);
+  const image = images.length > 0 ? images[0] : null;
+  const location = await townshipService.getTownshipById(user.city_id);
+  const healthData = await userHealthData.getUserHealthData(user.id);
+
+  return { ...user, plan, image, location, healthData };
 };
 
 const findByIdentification = async (
