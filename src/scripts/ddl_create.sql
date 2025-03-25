@@ -630,3 +630,100 @@ COMMENT ON COLUMN agent_chat_messages.sender_type IS 'Tipo de remitente: USER, A
 COMMENT ON COLUMN agent_chat_messages.status IS 'Estado del mensaje: SENT, DELIVERED, READ';
 COMMENT ON COLUMN users.last_seen IS 'Última vez que el usuario estuvo activo';
 COMMENT ON COLUMN users.online_status IS 'Indica si el usuario está actualmente en línea';
+
+-- New Tables for Medical data user ---------------------------------------------------
+-- Table for user allergies
+CREATE TABLE IF NOT EXISTS user_allergies (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  allergy_type VARCHAR(100) NOT NULL,
+  description TEXT,
+  severity VARCHAR(20) CHECK (severity IN ('MILD', 'MODERATE', 'SEVERE')) DEFAULT 'MILD',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user disabilities
+CREATE TABLE IF NOT EXISTS user_disabilities (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user diseases
+CREATE TABLE IF NOT EXISTS user_diseases (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  disease VARCHAR(200) NOT NULL,
+  diagnosed_date DATE,
+  treatment_required BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user distinctives (physical characteristics or identifiers)
+CREATE TABLE IF NOT EXISTS user_distinctives (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user family medical history
+CREATE TABLE IF NOT EXISTS user_family_history (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  history_type VARCHAR(50) NOT NULL,
+  relationship VARCHAR(100) NOT NULL,
+  description TEXT,
+  history_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user medical history
+CREATE TABLE IF NOT EXISTS user_medical_history (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  history_type VARCHAR(50) NOT NULL,
+  description TEXT,
+  history_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user medications
+CREATE TABLE IF NOT EXISTS user_medications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  medication VARCHAR(100) NOT NULL,
+  laboratory VARCHAR(100),
+  prescription TEXT,
+  dosage VARCHAR(100),
+  frequency VARCHAR(50),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for user vaccinations
+CREATE TABLE IF NOT EXISTS user_vaccinations (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  vaccine VARCHAR(100) NOT NULL,
+  vaccination_date DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_user_allergies_user_id ON user_allergies(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_disabilities_user_id ON user_disabilities(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_diseases_user_id ON user_diseases(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_distinctives_user_id ON user_distinctives(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_family_history_user_id ON user_family_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_medical_history_user_id ON user_medical_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_medications_user_id ON user_medications(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_vaccinations_user_id ON user_vaccinations(user_id);

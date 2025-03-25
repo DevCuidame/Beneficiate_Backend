@@ -16,14 +16,18 @@ const passwordResetRoutes = require('./modules/auth/password/password.reset.rout
 const emailVerificationRoutes = require('./modules/auth/verification/email.verification.routes');
 const workWithUsRoutes = require('./modules/work_with_us/work.verification.routes');
 const agentChatRoutes = require('./modules/agent_chat/agent_chat.routes');
+const userHealthRoutes = require('./modules/users/health/user.health.routes'); 
 
 const router = express.Router();
 
 // Register module routes
 router.use('/auth', authRoutes);
-router.use('/user', 
-    // authenticate, 
-    userRoutes);
+router.use(
+  '/user',
+  // authenticate,
+  userRoutes
+);
+router.use('/user/health', userHealthRoutes);
 router.use('/beneficiary', authenticate, beneficiaryRoutes);
 router.use('/beneficiary/image', authenticate, beneficiaryImageRoutes);
 router.use('/user/image', authenticate, userImageRoutes);
