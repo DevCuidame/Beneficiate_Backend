@@ -53,7 +53,13 @@ const appointmentSchema = Joi.object({
     .optional()
     .allow('', null)
     .messages({}),
-    
+
+    city_id: Joi.number()
+    .optional()
+    .allow('', null)
+    .messages({
+      'number.base': 'El ID de la ciudad debe ser un número',
+    }),
 
 
   userData: Joi.any().optional().allow('', null).messages({}),

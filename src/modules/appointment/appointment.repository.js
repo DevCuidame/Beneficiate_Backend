@@ -52,15 +52,31 @@ const createNewAppointment = async ({
   is_for_beneficiary,
   first_time,
   control,
+  city_id, 
 }) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     const insertQuery = `
-      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id, appointment_date, appointment_time, duration_minutes, first_time, control)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`;
-    // Reordenamos los valores para que coincidan con la consulta:
+      INSERT INTO medical_appointments (
+        user_id, 
+        beneficiary_id, 
+        status, 
+        notes, 
+        is_for_beneficiary, 
+        professional_id, 
+        specialty_id, 
+        appointment_date, 
+        appointment_time, 
+        duration_minutes, 
+        first_time, 
+        control,
+        city_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+      RETURNING *`;
+    
     const values = [
       user_id,
       beneficiary_id,
@@ -74,6 +90,7 @@ const createNewAppointment = async ({
       duration_minutes,
       first_time,
       control,
+      city_id, // Añadido a los valores
     ];
 
     const result = await client.query(insertQuery, values);
@@ -117,6 +134,7 @@ const updateAppointment = async (id, data) => {
     is_for_beneficiary,
     first_time,
     control,
+    city_id, // Nuevo campo
   } = data;
   
   let setClauses = [];
@@ -178,6 +196,13 @@ const updateAppointment = async (id, data) => {
   if (specialty_id !== undefined) {
     setClauses.push(`specialty_id = $${idx}`);
     values.push(specialty_id);
+    idx++;
+  }
+  
+  // Añadimos el nuevo campo city_id
+  if (city_id !== undefined) {
+    setClauses.push(`city_id = $${idx}`);
+    values.push(city_id);
     idx++;
   }
   

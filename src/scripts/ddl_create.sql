@@ -497,6 +497,7 @@ CREATE TABLE IF NOT EXISTS public.medical_appointments (
     is_for_beneficiary BOOLEAN NOT NULL,
     firstTime BOOLEAN NOT NULL DEFAULT TRUE,
     control BOOLEAN NOT NULL DEFAULT TRUE,
+    city_id BIGINT REFERENCES townships(id) ON DELETE RESTRICT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

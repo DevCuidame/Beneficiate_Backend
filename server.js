@@ -44,7 +44,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 app.use('/api/v1', routes);
 
 app.get('/', (req, res) => {
-  console.log('✅ La API está funcionando correctamente');
   res.json({ message: 'Server is running' });
 });
 
@@ -53,6 +52,5 @@ app.use(handleErrors);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
 // testWhatsApp();
 });

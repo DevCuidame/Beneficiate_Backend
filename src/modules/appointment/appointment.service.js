@@ -14,6 +14,7 @@ const professionalService = require('../medical_professionals/medicalProfessiona
 const medicalSpecialtiesService = require('../medical_specialties/medical_specialties.service');
 const userImage = require('../images/user/user.images.service');
 const WhatsAppService = require('../twilio/twilio.service');
+const townshipService = require('../township/township.service');
 
 const {
   generateConfirmationMessage,
@@ -232,6 +233,7 @@ const createNewAppointment = async (appointmentData) => {
 
 const createPendingAppointment = async (appointmentData) => {
   try {
+    // Eliminar el id cero y otros campos innecesarios
     const {
       id,
       created_at,
@@ -242,6 +244,7 @@ const createPendingAppointment = async (appointmentData) => {
       ...validAppointmentData
     } = appointmentData;
 
+    // Asegurarse de que los IDs son números
     const appointmentToCreate = {
       ...validAppointmentData,
       user_id: Number(validAppointmentData.user_id),
@@ -250,10 +253,12 @@ const createPendingAppointment = async (appointmentData) => {
         !validAppointmentData.beneficiary_id
           ? null
           : Number(validAppointmentData.beneficiary_id),
-      professional_id: Number(validAppointmentData.professional_id),
+      professional_id: validAppointmentData.professional_id ? Number(validAppointmentData.professional_id) : null,
       specialty_id: Number(validAppointmentData.specialty_id),
+      city_id: validAppointmentData.city_id ? Number(validAppointmentData.city_id) : null, // Manejar el nuevo campo
     };
-    console.log("🚀 ~ createPendingAppointment ~ appointmentToCreate:", appointmentToCreate)
+
+    console.log("🚀 ~ createPendingAppointment ~ appointmentToCreate:", appointmentToCreate);
 
     
     // Crear la cita en la base de datos
@@ -309,9 +314,26 @@ const createPendingAppointment = async (appointmentData) => {
       formattedAppointment.specialtyData = specialty;
     }
 
+    // Agregar datos de la ciudad si existe
+    if (formattedAppointment.city_id) {
+      try {
+        const location = await townshipService.getTownshipById(formattedAppointment.city_id);
+        if (location && location.length > 0) {
+          formattedAppointment.cityData = {
+            id: location[0].township_id,
+            name: location[0].township_name,
+            department_id: location[0].department_id,
+            department_name: location[0].department_name
+          };
+        }
+      } catch (error) {
+        console.error('Error al obtener datos de la ciudad:', error);
+      }
+    }
+
     return formattedAppointment;
   } catch (error) {
-    console.error('Error en createNewAppointment:', error);
+    console.error('Error en createPendingAppointment:', error);
     throw error;
   }
 };

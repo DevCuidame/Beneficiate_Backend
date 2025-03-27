@@ -51,7 +51,7 @@ const updateProfessionalScheduleType = async (id, scheduleType) => {
 const getMedicalProfessionalById = async (id) => {
   const professional = await medicalProfessionalRepository.findMedicalProfessionalById(id);
   if (!professional) {
-    throw new NotFoundError('Profesional médico no encontrado');
+    return null;
   }
   return professional;
 };  
