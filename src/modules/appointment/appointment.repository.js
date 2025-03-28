@@ -1,4 +1,5 @@
 const pool = require('../../config/connection');
+const ticketUtil = require('../../utils/ticket.util');
 
 const createAppointment = async ({
   user_id,
@@ -8,14 +9,18 @@ const createAppointment = async ({
   status,
   notes,
   is_for_beneficiary,
+  temp_address,
+  temp_doctor_name,
 }) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
+    const ticket_number = await ticketUtil.generateUniqueTicketNumber(pool);
+
     const insertQuery = `
-      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
+      INSERT INTO medical_appointments (user_id, beneficiary_id, status, notes, is_for_beneficiary, professional_id, specialty_id, ticket_number, temp_address, temp_doctor_name)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`;
     // Reordenamos los valores para que coincidan con la consulta:
     const values = [
       user_id,
@@ -25,6 +30,9 @@ const createAppointment = async ({
       is_for_beneficiary,
       professional_id,
       specialty_id,
+      ticket_number,
+      temp_address,
+      temp_doctor_name,
     ];
 
     const result = await client.query(insertQuery, values);
@@ -52,11 +60,15 @@ const createNewAppointment = async ({
   is_for_beneficiary,
   first_time,
   control,
-  city_id, 
+  city_id,
+  temp_address,
+  temp_doctor_name
 }) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    const ticket_number = await ticketUtil.generateUniqueTicketNumber(pool);
 
     const insertQuery = `
       INSERT INTO medical_appointments (
@@ -72,11 +84,15 @@ const createNewAppointment = async ({
         duration_minutes, 
         first_time, 
         control,
-        city_id
+        city_id,
+        ticket_number,
+        temp_address,
+        temp_doctor_name
+
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
       RETURNING *`;
-    
+
     const values = [
       user_id,
       beneficiary_id,
@@ -90,7 +106,10 @@ const createNewAppointment = async ({
       duration_minutes,
       first_time,
       control,
-      city_id, // Añadido a los valores
+      city_id,
+      ticket_number,
+      temp_address,
+      temp_doctor_name,
     ];
 
     const result = await client.query(insertQuery, values);
@@ -105,7 +124,6 @@ const createNewAppointment = async ({
   }
 };
 
-
 // Obtener una cita por ID
 const getAppointment = async (id) => {
   const query = `SELECT * FROM medical_appointments WHERE id = $1`;
@@ -118,7 +136,6 @@ const getAppointmentsByUserId = async (id) => {
   const result = await pool.query(query, [id]);
   return result.rows;
 };
-
 
 // Actualizar una cita
 const updateAppointment = async (id, data) => {
@@ -135,12 +152,14 @@ const updateAppointment = async (id, data) => {
     first_time,
     control,
     city_id, // Nuevo campo
+    temp_address,
+    temp_doctor_name,
   } = data;
-  
+
   let setClauses = [];
   let values = [];
   let idx = 1;
-  
+
   if (appointment_date !== undefined) {
     setClauses.push(`appointment_date = $${idx}`);
     values.push(appointment_date);
@@ -198,19 +217,33 @@ const updateAppointment = async (id, data) => {
     values.push(specialty_id);
     idx++;
   }
-  
+
   // Añadimos el nuevo campo city_id
   if (city_id !== undefined) {
     setClauses.push(`city_id = $${idx}`);
     values.push(city_id);
     idx++;
   }
-  
-  if (setClauses.length === 0) {
-    throw new Error("No hay campos para actualizar");
+
+  if (temp_doctor_name !== undefined) {
+    setClauses.push(`temp_doctor_name = $${idx}`);
+    values.push(temp_doctor_name);
+    idx++;
   }
-  
-  const query = `UPDATE medical_appointments SET ${setClauses.join(", ")} WHERE id = $${idx} RETURNING *`;
+
+  if (temp_address !== undefined) {
+    setClauses.push(`temp_address = $${idx}`);
+    values.push(temp_address);
+    idx++;
+  }
+
+  if (setClauses.length === 0) {
+    throw new Error('No hay campos para actualizar');
+  }
+
+  const query = `UPDATE medical_appointments SET ${setClauses.join(
+    ', '
+  )} WHERE id = $${idx} RETURNING *`;
   values.push(id);
   const result = await pool.query(query, values);
   return result.rows[0];
@@ -226,7 +259,6 @@ const cancelAppointment = async (id) => {
   }
   return result.rows[0];
 };
-
 
 // Reprogramar una cita
 const rescheduleAppointment = async (id, newDate) => {
@@ -277,11 +309,10 @@ const getAppointmentsForCallCenter = async ({
   let values = [];
   let countValues = [];
 
-
   // Validar status contra el enum
-  const validStatuses = ["PENDING", "CONFIRMED", "CANCELLED"];
+  const validStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED'];
   if (status && !validStatuses.includes(status.toUpperCase())) {
-    throw new Error("❌ Status inválido");
+    throw new Error('❌ Status inválido');
   }
 
   if (status) {
@@ -292,28 +323,34 @@ const getAppointmentsForCallCenter = async ({
   }
 
   if (startDate && endDate) {
-    query += ` AND appointment_date BETWEEN $${values.length + 1} AND $${values.length + 2}`;
-    countQuery += ` AND appointment_date BETWEEN $${countValues.length + 1} AND $${countValues.length + 2}`;
+    query += ` AND appointment_date BETWEEN $${values.length + 1} AND $${
+      values.length + 2
+    }`;
+    countQuery += ` AND appointment_date BETWEEN $${
+      countValues.length + 1
+    } AND $${countValues.length + 2}`;
     values.push(new Date(startDate), new Date(endDate));
     countValues.push(new Date(startDate), new Date(endDate));
   }
 
-   // Aplicar filtro de `is_for_beneficiary`
-   if (isForBeneficiary !== undefined) {
-  query += ` AND is_for_beneficiary = $${values.length + 1}`;
-  countQuery += ` AND is_for_beneficiary = $${countValues.length + 1}`;
-  values.push(isForBeneficiary);
-  countValues.push(isForBeneficiary);
-}
+  // Aplicar filtro de `is_for_beneficiary`
+  if (isForBeneficiary !== undefined) {
+    query += ` AND is_for_beneficiary = $${values.length + 1}`;
+    countQuery += ` AND is_for_beneficiary = $${countValues.length + 1}`;
+    values.push(isForBeneficiary);
+    countValues.push(isForBeneficiary);
+  }
 
   if (beneficiaryId !== null) {
     query += ` AND beneficiary_id = $${values.length + 1}`;
     countQuery += ` AND beneficiary_id = $${countValues.length + 1}`;
     values.push(beneficiaryId); // No need to parse again, it's already an int or null
     countValues.push(beneficiaryId);
-}
+  }
 
-  query += ` ORDER BY appointment_date ASC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+  query += ` ORDER BY appointment_date ASC LIMIT $${
+    values.length + 1
+  } OFFSET $${values.length + 2}`;
   values.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
 
   try {
@@ -348,7 +385,6 @@ const expireOldAppointments = async (twoHoursAgo) => {
   return result;
 };
 
-
 // Notificación de eventos
 const sendNotification = async (userId, message) => {
   console.log(`Enviando notificación a usuario ${userId}: ${message}`);
@@ -367,5 +403,5 @@ module.exports = {
   sendNotification,
   expireOldAppointments,
   getAppointmentsByUserId,
-  createNewAppointment
+  createNewAppointment,
 };

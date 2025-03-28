@@ -72,6 +72,7 @@ const updateAppointment = async (req, res) => {
     );
     successResponse(res, updatedAppointment, 'Cita actualizada exitosamente');
   } catch (error) {
+    console.log("🚀 ~ updateAppointment ~ error:", error)
     errorResponse(res, error);
   }
 };

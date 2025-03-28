@@ -158,6 +158,10 @@ const createNewAppointment = async (appointmentData) => {
       ...validAppointmentData
     } = appointmentData;
 
+    console.log(
+      '🚀 ~ createNewAppointment ~ appointmentData:',
+      appointmentData
+    );
     // Asegurarse de que los IDs son números
     const appointmentToCreate = {
       ...validAppointmentData,
@@ -209,11 +213,15 @@ const createNewAppointment = async (appointmentData) => {
       const professional = await professionalService.getMedicalProfessionalById(
         formattedAppointment.professional_id
       );
-      const professionalUser = await userService.getUserById(
-        professional.user_id
-      );
-      formattedAppointment.professionalData = professional;
-      formattedAppointment.professionalData.user = professionalUser;
+      if (professional) {
+        const professionalUser = await userService.getUserById(
+          professional.user_id
+        );
+        formattedAppointment.professionalData = professional;
+        formattedAppointment.professionalData.user = professionalUser;
+      }
+
+
     }
 
     // Agregar datos de la especialidad
@@ -253,14 +261,20 @@ const createPendingAppointment = async (appointmentData) => {
         !validAppointmentData.beneficiary_id
           ? null
           : Number(validAppointmentData.beneficiary_id),
-      professional_id: validAppointmentData.professional_id ? Number(validAppointmentData.professional_id) : null,
+      professional_id: validAppointmentData.professional_id
+        ? Number(validAppointmentData.professional_id)
+        : null,
       specialty_id: Number(validAppointmentData.specialty_id),
-      city_id: validAppointmentData.city_id ? Number(validAppointmentData.city_id) : null, // Manejar el nuevo campo
+      city_id: validAppointmentData.city_id
+        ? Number(validAppointmentData.city_id)
+        : null, // Manejar el nuevo campo
     };
 
-    console.log("🚀 ~ createPendingAppointment ~ appointmentToCreate:", appointmentToCreate);
+    console.log(
+      '🚀 ~ createPendingAppointment ~ appointmentToCreate:',
+      appointmentToCreate
+    );
 
-    
     // Crear la cita en la base de datos
     const appointment = await appointmentRepository.createNewAppointment(
       appointmentToCreate
@@ -317,13 +331,15 @@ const createPendingAppointment = async (appointmentData) => {
     // Agregar datos de la ciudad si existe
     if (formattedAppointment.city_id) {
       try {
-        const location = await townshipService.getTownshipById(formattedAppointment.city_id);
+        const location = await townshipService.getTownshipById(
+          formattedAppointment.city_id
+        );
         if (location && location.length > 0) {
           formattedAppointment.cityData = {
             id: location[0].township_id,
             name: location[0].township_name,
             department_id: location[0].department_id,
-            department_name: location[0].department_name
+            department_name: location[0].department_name,
           };
         }
       } catch (error) {
@@ -344,13 +360,15 @@ const updateAppointment = async (id, data) => {
     data
   );
 
-  const doctor = await professionalService.getMedicalProfessionalById(
-    updatedAppointment.professional_id
-  );
-  const doctorBasicData = await userService.getUserById(doctor.user_id);
-  const doctorName =
-    doctorBasicData?.first_name + ' ' + doctorBasicData?.last_name;
-  const doctorPhone = doctorBasicData?.phone;
+  if (updateAppointment.professional_id) {
+    const doctor = await professionalService.getMedicalProfessionalById(
+      updatedAppointment.professional_id
+    );
+    const doctorBasicData = await userService.getUserById(doctor.user_id);
+    const doctorName =
+      doctorBasicData?.first_name + ' ' + doctorBasicData?.last_name;
+    const doctorPhone = doctorBasicData?.phone;
+  }
 
   // Corregido: Usar los campos correctos para formatear fecha y hora
   const date = formatAppointmentDate(updatedAppointment.appointment_date);
@@ -478,17 +496,20 @@ const updateAppointmentStatus = async (id, status) => {
     throw new NotFoundError('Cita no encontrada');
   }
 
-  const updatedAppointment = await appointmentRepository.updateAppointment(id, { status });
+  const updatedAppointment = await appointmentRepository.updateAppointment(id, {
+    status,
+  });
 
   if (appointment.status !== status) {
     try {
       const doctor = await professionalService.getMedicalProfessionalById(
         updatedAppointment.professional_id
       );
-      
+
       if (doctor) {
         const doctorBasicData = await userService.getUserById(doctor.user_id);
-        const doctorName = doctorBasicData?.first_name + ' ' + doctorBasicData?.last_name;
+        const doctorName =
+          doctorBasicData?.first_name + ' ' + doctorBasicData?.last_name;
         const doctorPhone = doctorBasicData?.phone;
 
         const date = formatAppointmentDate(updatedAppointment.appointment_date);
@@ -575,6 +596,15 @@ const getAllAppointments = async () => {
         );
         formattedAppointment.professionalData = professional;
         formattedAppointment.professionalData.user = professionalUser;
+      }
+
+      if (formattedAppointment.city_id) {
+        const location = await townshipService.getTownshipById(
+          formattedAppointment.city_id
+        );
+        if (location && location.length > 0) {
+          formattedAppointment.location = location;
+        }
       }
 
       // Obtener datos de la especialidad médica
@@ -746,5 +776,5 @@ module.exports = {
   getAppointmentsByUserId,
   createNewAppointment,
   createPendingAppointment,
-  updateAppointmentStatus
+  updateAppointmentStatus,
 };

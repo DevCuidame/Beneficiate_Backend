@@ -25,44 +25,43 @@ const appointmentSchema = Joi.object({
       'date.greater': 'La fecha de la cita debe ser en el futuro',
     }),
 
-    appointment_time: Joi.string()
-    .optional()
-    .allow('', null)
-    .messages({
-      'date.base': 'La hora de la cita debe ser una fecha válida',
-      'any.required': 'La hora de la cita es obligatoria',
-    }),
+  appointment_time: Joi.string().optional().allow('', null).messages({
+    'date.base': 'La hora de la cita debe ser una fecha válida',
+    'any.required': 'La hora de la cita es obligatoria',
+  }),
 
   created_at: Joi.date().optional().allow('', null).messages({
     'date.base': 'La fecha de creación debe ser una fecha válida',
   }),
 
-  created_at_formatted: Joi.string().optional().allow('', null).messages({
+  created_at_formatted: Joi.string().optional().allow('', null).messages({}),
+  professional_id: Joi.string().optional().allow('', null).messages({}),
+
+  duration_minutes: Joi.number().optional().allow('', null).messages({}),
+
+  specialty: Joi.any().optional().allow('', null).messages({}),
+
+  city_id: Joi.number().optional().allow('', null).messages({
+    'number.base': 'El ID de la ciudad debe ser un número',
   }),
-  professional_id: Joi.string()
-    .optional()
-    .allow('', null)
-    .messages({}),
 
-  duration_minutes: Joi.number()
-    .optional()
-    .allow('', null)
-    .messages({}),
-    
-    specialty: Joi.any()
-    .optional()
-    .allow('', null)
-    .messages({}),
-
-    city_id: Joi.number()
-    .optional()
-    .allow('', null)
-    .messages({
-      'number.base': 'El ID de la ciudad debe ser un número',
-    }),
-
+  ticket_number: Joi.string().max(20).optional().allow('', null).messages({
+    'string.max': 'El número de ticket no puede tener más de 20 caracteres',
+  }),
 
   userData: Joi.any().optional().allow('', null).messages({}),
+  city_id: Joi.any().optional().allow('', null).messages({
+    'number.base': 'El ID de la ciudad debe ser un número',
+  }),
+  temp_address: Joi.any().optional().allow('', null).messages({
+    'any.required': 'La dirección temporal es requerida',
+  }),
+  temp_doctor_name: Joi.any().optional().allow('', null).messages({
+    'any.required': 'El nombre del doctor temporal es requerido',
+  }),
+  location: Joi.any().optional().allow('', null).messages({
+    'any.required': 'La ubicación es requerida',
+  }),
   professionalData: Joi.any().optional().allow('', null).messages({}),
   specialtyData: Joi.any().optional().allow('', null).messages({}),
 
@@ -71,7 +70,13 @@ const appointmentSchema = Joi.object({
   first_time: Joi.boolean().optional().allow('', null).messages({}),
 
   status: Joi.string()
-    .valid('PENDING', 'CONFIRMED', 'CANCELLED', 'RESCHEDULED', 'TO_BE_CONFIRMED')
+    .valid(
+      'PENDING',
+      'CONFIRMED',
+      'CANCELLED',
+      'RESCHEDULED',
+      'TO_BE_CONFIRMED'
+    )
     .optional()
     .allow('', null)
     .messages({

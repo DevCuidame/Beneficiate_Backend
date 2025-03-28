@@ -728,3 +728,98 @@ CREATE INDEX IF NOT EXISTS idx_user_family_history_user_id ON user_family_histor
 CREATE INDEX IF NOT EXISTS idx_user_medical_history_user_id ON user_medical_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_medications_user_id ON user_medications(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_vaccinations_user_id ON user_vaccinations(user_id);
+
+
+
+-- Ticket
+
+-- Migración para agregar campo ticket_number a la tabla medical_appointments
+
+-- Primero, verificar si la columna ya existe
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'medical_appointments' 
+        AND column_name = 'ticket_number'
+    ) THEN
+        -- Agregar la columna si no existe
+        ALTER TABLE medical_appointments
+        ADD COLUMN ticket_number VARCHAR(20) UNIQUE;
+        
+        -- Comentario para la columna
+        COMMENT ON COLUMN medical_appointments.ticket_number IS 'Número único de ticket para la cita médica';
+    END IF;
+END
+$$;
+-- Generar tickets para citas existentes 
+DO $$
+DECLARE
+    appointment RECORD;
+    new_ticket VARCHAR(20);
+    random_part VARCHAR(5);
+    timestamp_part VARCHAR(4);
+BEGIN
+    FOR appointment IN SELECT id FROM medical_appointments WHERE ticket_number IS NULL LOOP
+        -- Generar parte aleatoria (5 caracteres)
+        random_part := UPPER(SUBSTRING(MD5(RANDOM()::TEXT), 1, 5));
+        
+        -- Generar parte de timestamp (últimos 4 dígitos)
+        timestamp_part := SUBSTRING(EXTRACT(EPOCH FROM NOW())::TEXT, LENGTH(EXTRACT(EPOCH FROM NOW())::TEXT) - 3);
+        
+        -- Combinar para formar un ticket de exactamente 14 caracteres: APT-XXXXX-YYYY
+        new_ticket := 'APT-' || random_part || '-' || timestamp_part;
+        
+        -- Verificar longitud antes de insertar
+        IF LENGTH(new_ticket) > 20 THEN
+            RAISE NOTICE 'Ticket demasiado largo: %', new_ticket;
+            -- Truncar si es necesario
+            new_ticket := SUBSTRING(new_ticket, 1, 20);
+        END IF;
+        
+        -- Actualizar la cita con el nuevo ticket
+        UPDATE medical_appointments
+        SET ticket_number = new_ticket
+        WHERE id = appointment.id;
+    END LOOP;
+END
+$$;
+
+-- Crear un índice para búsqueda rápida por ticket_number
+CREATE INDEX IF NOT EXISTS idx_medical_appointments_ticket_number
+ON medical_appointments(ticket_number);
+
+
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'medical_appointments' 
+        AND column_name = 'temp_address'
+    ) THEN
+        -- Agregar la columna si no existe
+        ALTER TABLE medical_appointments
+        ADD COLUMN temp_address VARCHAR(100);
+        
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'medical_appointments' 
+        AND column_name = 'temp_doctor_name'
+    ) THEN
+        -- Agregar la columna si no existe
+        ALTER TABLE medical_appointments
+        ADD COLUMN temp_doctor_name VARCHAR(100);
+        
+    END IF;
+END
+$$;
