@@ -9,6 +9,7 @@ const imageRepository = require('../images/user/user.images.repository');
 const PATHS = require('../../config/paths');
 const emailVerificationService = require('./verification/email.verification.service');
 const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
+const userService = require('../users/user.service');
 
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');
@@ -156,4 +157,36 @@ const verifyEmail = async (token) => {
   }
 };
 
-module.exports = { login, register, refreshToken, verifyEmail };
+
+
+const deleteAccount = async (userId, password) => {
+  const user = await userService.getUser(userId);
+  if (!user) {
+    throw new NotFoundError('Usuario no encontrado');
+  }
+
+  if (!password || !user.password) {
+    throw new ValidationError('Contraseña incorrecta o datos de usuario inválidos');
+  }
+
+  try {
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      throw new UnauthorizedError('Contraseña incorrecta');
+    }
+  } catch (error) {
+    console.error('Error al verificar contraseña:', error);
+    throw new UnauthorizedError('Error al verificar credenciales');
+  }
+
+  await authRepository.deleteUserData(userId);
+  
+  const deleted = await authRepository.deleteUserAccount(userId);
+  if (!deleted) {
+    throw new Error('No se pudo eliminar la cuenta');
+  }
+
+  return { success: true };
+};
+
+module.exports = { login, register, refreshToken, verifyEmail, deleteAccount };

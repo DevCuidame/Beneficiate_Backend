@@ -87,5 +87,12 @@ const registerSchema = Joi.object({
   })
 });
 
+const deleteAccountSchema = Joi.object({
+  password: Joi.string().required().messages({
+    "any.required": "La contraseña es obligatoria",
+    "string.empty": "La contraseña no puede estar vacía"
+  })
+});
 
-module.exports = { loginSchema, registerSchema };
+
+module.exports = { loginSchema, registerSchema, deleteAccountSchema };

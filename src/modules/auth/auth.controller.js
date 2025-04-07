@@ -79,4 +79,23 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-module.exports = { login, register, refreshTokenController, verifyEmail };
+
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id; // Get user ID from authenticated request
+    const { password } = req.body;
+
+
+    if (!password) {
+      throw new ValidationError('La contraseña es obligatoria para eliminar la cuenta');
+    }
+
+    const result = await authService.deleteAccount(userId, password);
+    successResponse(res, result, 'Cuenta eliminada exitosamente');
+  } catch (error) {
+    console.error('Error during account deletion:', error);
+    errorResponse(res, error);
+  }
+};
+
+module.exports = { login, register, refreshTokenController, verifyEmail, deleteAccount };

@@ -32,6 +32,17 @@ const getUserById = async (id) => {
   ]);
 };
 
+const getUser = async (id) => {
+  const result = await pool.query(
+    `SELECT
+      *
+     FROM users
+     WHERE id = $1;`,
+    [id]
+  );
+  return result.rows[0]; // Devuelve el primer elemento del array o null si no hay resultados
+};
+
 const getUserByIdNum = async (id) => {
   const result = await pool.query(
     'SELECT id, first_name, last_name, identification_type, identification_number, address, city_id, phone, gender, birth_date, email, verified, created_at, plan_id FROM users WHERE identification_number = $1',
@@ -295,4 +306,5 @@ module.exports = {
   invalidateVerificationToken,
   verifyUser,
   updateUser,
+  getUser
 };

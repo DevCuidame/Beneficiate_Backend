@@ -75,4 +75,13 @@ const findByIdentification = async (
   }
 };
 
-module.exports = { findByEmail, getUserById, findByIdentification };
+const getUser = async (id) => {
+  const user = await userRepository.getUser(id);
+
+  if (!user) {
+    throw new NotFoundError('Usuario no encontrado');
+  } 
+  return user;
+}
+
+module.exports = { findByEmail, getUserById, findByIdentification, getUser };
