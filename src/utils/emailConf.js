@@ -52,6 +52,4 @@ const testConnection = async () => {
   }
 };
 
-module.exports = {
-  transporter
-};
+module.exports = transporter;

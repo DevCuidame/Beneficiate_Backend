@@ -43,9 +43,9 @@ const login = async (email, password) => {
   }
 
   // Verificar si el usuario ha verificado su correo
-  if (!user.verified) {
-    throw new UnauthorizedError('Por favor verifica tu correo electrónico antes de iniciar sesión');
-  }
+  // if (!user.verified) {
+  //   throw new UnauthorizedError('Por favor verifica tu correo electrónico antes de iniciar sesión');
+  // }
 
   let isAgent = false;
   let agentActive = false;
