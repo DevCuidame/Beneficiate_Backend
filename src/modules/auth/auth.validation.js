@@ -76,10 +76,10 @@ const registerSchema = Joi.object({
   }),
   verified: Joi.boolean().default(false),
   plan_id: Joi.number().default(1),
-  public_name: Joi.string().max(100).optional().messages({
+  public_name: Joi.string().max(100).optional().allow('', null).messages({
     "string.max": "El nombre público no puede tener más de 100 caracteres"
   }),
-  base_64: Joi.string().optional().messages({
+  base_64: Joi.string().optional().allow('', null).messages({
     "string.base": "La imagen debe ser una cadena en formato Base64"
   }),
   privacy_policy: Joi.boolean().required().messages({
