@@ -16,23 +16,18 @@ const {
 const app = express();
 
 // Middleware
-app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: ['https://beneficiate.co', 'http://localhost:4200'], // List all allowed origins instead of '*' for better security
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'wompi-signature']
+}));
+
+// body parser with increased limits for various content types
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 
 const server = http.createServer(app);
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, wompi-signature');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next();
-});
 
 // Inicializar WebSocket con el servidor HTTP
 initializeWebSocket(server);
