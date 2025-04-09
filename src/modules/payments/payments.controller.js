@@ -176,6 +176,7 @@ const verifyTransactionDetails = async (req, res) => {
         ut.user_id, 
         ut.plan_id,
         p.name as plan_name,
+        p.description as plan_description,
         p.duration_days,
         u.email as user_email
       FROM user_transactions ut
@@ -201,6 +202,7 @@ const verifyTransactionDetails = async (req, res) => {
         success: true,
         planId: transaction.plan_id,
         planName: transaction.plan_name,
+        planDescription: transaction.plan_description,
         statusMessage: 'Pago aprobado y plan asignado'
       });
     }
@@ -208,6 +210,8 @@ const verifyTransactionDetails = async (req, res) => {
     // Verificar con Wompi
     try {
       const wompiDetails = await wompiService.getTransactionDetails(transactionId);
+      console.log('Respuesta de Wompi:', wompiDetails);
+      
       const isApproved = wompiDetails.status === 'APPROVED';
       
       if (isApproved) {
@@ -224,6 +228,7 @@ const verifyTransactionDetails = async (req, res) => {
           success: true,
           planId: transaction.plan_id,
           planName: transaction.plan_name,
+          planDescription: transaction.plan_description,
           statusMessage: 'Pago aprobado y plan asignado'
         });
       } else {
@@ -231,14 +236,19 @@ const verifyTransactionDetails = async (req, res) => {
           success: false,
           planId: transaction.plan_id,
           planName: transaction.plan_name,
-          statusMessage: `Estado del pago: ${wompiDetails.status}`
+          statusMessage: `Estado del pago: ${wompiDetails.status || 'PENDIENTE'}`
         });
       }
     } catch (wompiError) {
       console.error('Error consultando Wompi:', wompiError);
+      
+      // Verificar si el error tiene una respuesta estructurada
+      const errorDetails = wompiError.response?.data || {};
+      
       return res.json({
         success: false,
-        statusMessage: 'Error consultando estado del pago en Wompi'
+        statusMessage: 'Error consultando estado del pago en Wompi',
+        errorDetails: errorDetails
       });
     }
   } catch (error) {
@@ -250,6 +260,8 @@ const verifyTransactionDetails = async (req, res) => {
     });
   }
 };
+
+
 
 module.exports = {
   createPayment,
