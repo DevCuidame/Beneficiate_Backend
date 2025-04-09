@@ -31,7 +31,10 @@ class WompiPaymentService {
 
       // Parsear el precio correctamente
       // Eliminar puntos y comas para manejar formato como "250.000" o "250,000"
-      const cleanPrice = planInfo.price.toString().replace(/\./g, '').replace(/,/g, '');
+      const cleanPrice = planInfo.price
+        .toString()
+        .replace(/\./g, '')
+        .replace(/,/g, '');
 
       // Convertir a número y luego a centavos
       const priceInCents = parseInt(cleanPrice);
@@ -214,28 +217,41 @@ class WompiPaymentService {
 
         // Verificar si está aprobada
         if (transaction.status === 'APPROVED') {
-          // Extraer metadata personalizada
-          let userId, planId;
+          // Obtener el ID del payment_link
+          const paymentLinkId = transaction.payment_link_id;
+          console.log(`Payment Link ID: ${paymentLinkId}`);
 
-          if (
-            transaction.reference &&
-            transaction.reference.startsWith('plan_')
-          ) {
-            [_, planId, userId] = transaction.reference.split('_');
-          } else if (transaction.custom_data || transaction.metadata) {
-            // Intentar obtener datos de campos custom
-            const customData =
-              transaction.custom_data || transaction.metadata || {};
-            userId = customData.user_id;
-            planId = customData.plan_id;
+          if (!paymentLinkId) {
+            console.error('No se encontró paymentLinkId en el webhook');
+            return { success: false };
           }
 
-          if (userId && planId) {
+          // Buscar en nuestra base de datos la transacción correspondiente
+          const query = `
+          SELECT user_id, plan_id 
+          FROM user_transactions 
+          WHERE transaction_id = $1
+        `;
+
+          const result = await pool.query(query, [paymentLinkId]);
+
+          if (result.rows.length === 0) {
+            console.error(
+              `No se encontró la transacción con ID: ${paymentLinkId}`
+            );
+            return { success: false };
+          }
+
+          const { user_id, plan_id } = result.rows[0];
+
+          if (user_id && plan_id) {
             // Actualizar plan de usuario
-            await this.updateUserPlan(userId, planId);
+            await this.updateUserPlan(user_id, plan_id);
             return { success: true };
           } else {
-            console.error('No se pudieron extraer userId y planId del webhook');
+            console.error(
+              'No se pudieron extraer userId y planId de la transacción en BD'
+            );
             return { success: false };
           }
         } else {
@@ -347,17 +363,17 @@ class WompiPaymentService {
       );
 
       const query = `
-        INSERT INTO user_transactions (
-          user_id, 
-          plan_id, 
-          transaction_id, 
-          amount, 
-          reference, 
-          status,
-          plan_name,
-          currency
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `;
+      INSERT INTO user_transactions (
+        user_id, 
+        plan_id, 
+        transaction_id, 
+        amount, 
+        reference, 
+        status,
+        plan_name,
+        currency
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
 
       await pool.query(query, [
         userId,

@@ -131,10 +131,45 @@ const simulateWebhook = async (req, res) => {
   res.json({ success: true });
 };
 
+// Añade este método en payments.controller.js
+const getTransactionStatus = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    
+    // Buscar en nuestra base de datos
+    const query = `
+      SELECT * FROM user_transactions WHERE transaction_id = $1
+    `;
+    
+    const result = await pool.query(query, [transactionId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Transacción no encontrada',
+        transactionId
+      });
+    }
+    
+    // Obtener detalles de Wompi
+    const wompiDetails = await wompiService.getTransactionDetails(transactionId);
+    
+    res.json({
+      localTransaction: result.rows[0],
+      wompiDetails
+    });
+  } catch (error) {
+    console.error('Error obteniendo estado de transacción:', error);
+    res.status(500).json({ error: 'Error obteniendo detalles de transacción' });
+  }
+};
+
+// Y añade esta ruta en payments.routes.js
+
 module.exports = {
   createPayment,
   handleWebhook,
   verifyTransaction,
   getPaymentHistory,
-  simulateWebhook
+  simulateWebhook,
+  getTransactionStatus
 };

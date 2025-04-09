@@ -14,5 +14,8 @@ router.post('/simulate-webhook', paymentsController.simulateWebhook);
 // ¡IMPORTANTE! Esta ruta debe estar disponible públicamente
 router.post('/webhook/wompi', paymentsController.handleWebhook);
 
+router.get('/transaction-status/:transactionId', authMiddleware, paymentsController.getTransactionStatus);
+
+
 
 module.exports = router;
