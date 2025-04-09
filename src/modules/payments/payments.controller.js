@@ -163,7 +163,93 @@ const getTransactionStatus = async (req, res) => {
   }
 };
 
-// Y añade esta ruta en payments.routes.js
+const verifyTransactionDetails = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    console.log(`Verificando detalles de transacción: ${transactionId}`);
+    
+    // Buscar en nuestra base de datos
+    const query = `
+      SELECT 
+        ut.transaction_id, 
+        ut.status, 
+        ut.user_id, 
+        ut.plan_id,
+        p.name as plan_name,
+        p.duration_days,
+        u.email as user_email
+      FROM user_transactions ut
+      JOIN plans p ON ut.plan_id = p.id
+      JOIN users u ON ut.user_id = u.id
+      WHERE ut.transaction_id = $1
+    `;
+    
+    const result = await pool.query(query, [transactionId]);
+    
+    if (result.rows.length === 0) {
+      return res.json({
+        success: false,
+        statusMessage: 'Transacción no encontrada'
+      });
+    }
+    
+    const transaction = result.rows[0];
+    
+    // Si ya está aprobada en nuestra base de datos
+    if (transaction.status === 'APPROVED') {
+      return res.json({
+        success: true,
+        planId: transaction.plan_id,
+        planName: transaction.plan_name,
+        statusMessage: 'Pago aprobado y plan asignado'
+      });
+    }
+    
+    // Verificar con Wompi
+    try {
+      const wompiDetails = await wompiService.getTransactionDetails(transactionId);
+      const isApproved = wompiDetails.status === 'APPROVED';
+      
+      if (isApproved) {
+        // Actualizar estado en la BD
+        await pool.query(
+          `UPDATE user_transactions SET status = 'APPROVED', updated_at = NOW() WHERE transaction_id = $1`,
+          [transactionId]
+        );
+        
+        // Actualizar plan del usuario
+        await wompiService.updateUserPlan(transaction.user_id, transaction.plan_id);
+        
+        return res.json({
+          success: true,
+          planId: transaction.plan_id,
+          planName: transaction.plan_name,
+          statusMessage: 'Pago aprobado y plan asignado'
+        });
+      } else {
+        return res.json({
+          success: false,
+          planId: transaction.plan_id,
+          planName: transaction.plan_name,
+          statusMessage: `Estado del pago: ${wompiDetails.status}`
+        });
+      }
+    } catch (wompiError) {
+      console.error('Error consultando Wompi:', wompiError);
+      return res.json({
+        success: false,
+        statusMessage: 'Error consultando estado del pago en Wompi'
+      });
+    }
+  } catch (error) {
+    console.error('Error verificando detalles de transacción:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error verificando transacción', 
+      statusMessage: 'Error interno del servidor' 
+    });
+  }
+};
 
 module.exports = {
   createPayment,
@@ -171,5 +257,6 @@ module.exports = {
   verifyTransaction,
   getPaymentHistory,
   simulateWebhook,
-  getTransactionStatus
+  getTransactionStatus,
+  verifyTransactionDetails
 };

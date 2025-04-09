@@ -9,12 +9,13 @@ router.get('/verify/:transactionId', authMiddleware, paymentsController.verifyTr
 router.get('/history', authMiddleware, paymentsController.getPaymentHistory);
 
 router.post('/simulate-webhook', paymentsController.simulateWebhook);
+router.get('/transaction-status/:transactionId', authMiddleware, paymentsController.getTransactionStatus);
+router.get('/verify-details/:transactionId', authMiddleware, paymentsController.verifyTransactionDetails);
+
 
 // Webhook público para Wompi (no requiere autenticación)
 // ¡IMPORTANTE! Esta ruta debe estar disponible públicamente
 router.post('/webhook/wompi', paymentsController.handleWebhook);
-
-router.get('/transaction-status/:transactionId', authMiddleware, paymentsController.getTransactionStatus);
 
 
 
