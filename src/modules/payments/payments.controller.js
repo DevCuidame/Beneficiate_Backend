@@ -1,7 +1,7 @@
 const WompiPaymentService = require('../wompi/user.payment.service');
 const userService = require('../users/user.service');
 const planService = require('../plans/plan.service');
-
+const pool = require('../../config/connection');
 const wompiService = new WompiPaymentService();
 
 // Iniciar proceso de pago
