@@ -9,9 +9,22 @@ const findMedicalSpecialtyById = async (id) => {
 };
 
 const getAll = async () => {
-  const result = await pool.query('SELECT * FROM medical_specialties');
+  const result = await pool.query(`
+    SELECT * FROM medical_specialties
+    ORDER BY 
+      CASE 
+        WHEN name = 'Ginecología' THEN 1
+        WHEN name = 'Pediatría' THEN 2
+        WHEN name = 'Medicina Interna' THEN 3
+        WHEN name = 'Cardiología' THEN 4
+        WHEN name = 'Neurología' THEN 5
+        ELSE 6
+      END,
+      name ASC
+  `);
   return result.rows || [];
 };
+
 
 const createMedicalSpecialty = async (specialtyData) => {
   const { name, description, public_name, private_name, image_path } = specialtyData;

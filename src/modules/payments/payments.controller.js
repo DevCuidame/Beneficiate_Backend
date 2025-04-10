@@ -7,11 +7,9 @@ const wompiService = new WompiPaymentService();
 // Iniciar proceso de pago
 const createPayment = async (req, res) => {
   try {
-    console.log('Iniciando proceso de pago con datos:', req.body);
     const { planId } = req.body;
-    const userId = req.user.id; // Asumiendo que tienes middleware de autenticación
+    const userId = req.user.id; 
 
-    console.log(`Procesando pago - Usuario: ${userId}, Plan: ${planId}`);
 
     // Obtener email del usuario
     const user = await userService.getUserById(userId);
@@ -28,7 +26,6 @@ const createPayment = async (req, res) => {
       return res.status(404).json({ error: 'Plan no encontrado' });
     }
 
-    console.log('Datos del plan:', plan);
 
     // Iniciar transacción de pago
     const transaction = await wompiService.createPaymentTransaction(
@@ -39,7 +36,6 @@ const createPayment = async (req, res) => {
       user.email // Email del usuario
     );
 
-    console.log('Transacción creada exitosamente:', transaction.id);
 
     // Estructura de respuesta para el cliente
     const response = {
@@ -48,7 +44,6 @@ const createPayment = async (req, res) => {
       redirectUrl: transaction.data?.checkout_url,
     };
 
-    console.log('Enviando respuesta al cliente:', response);
 
     if (!response.redirectUrl) {
       console.error('URL de redirección no disponible');
@@ -67,41 +62,32 @@ const createPayment = async (req, res) => {
 // Webhook para Wompi
 const handleWebhook = async (req, res) => {
   try {
-    console.log('Webhook recibido:', JSON.stringify(req.body, null, 2));
 
     // Verificar que sea un evento de actualización de transacción
     const { event, data, environment } = req.body;
 
     if (event !== 'transaction.updated') {
-      console.log(`Evento ignorado: ${event}`);
       return res.json({ success: false, message: 'Evento no procesable' });
     }
 
     if (!data || !data.transaction) {
-      console.log('Webhook sin datos de transacción');
       return res.json({ success: false, message: 'Datos incompletos' });
     }
 
     const transaction = data.transaction;
-    console.log(
-      'Datos de transacción recibidos:',
-      JSON.stringify(transaction, null, 2)
-    );
+ 
 
     // Verificar estado de la transacción
     if (transaction.status !== 'APPROVED') {
-      console.log(`Transacción no aprobada: ${transaction.status}`);
       return res.json({ success: false, status: transaction.status });
     }
 
     // Extraer el ID del payment link
     const paymentLinkId = transaction.payment_link_id;
     if (!paymentLinkId) {
-      console.log('No se encontró ID de payment link');
       return res.json({ success: false, message: 'Datos incompletos' });
     }
 
-    console.log(`Payment Link ID: ${paymentLinkId}`);
 
     // Buscar en base de datos
     const query = `
@@ -114,7 +100,6 @@ const handleWebhook = async (req, res) => {
     const result = await pool.query(query, [paymentLinkId]);
 
     if (result.rows.length === 0) {
-      console.log(`No se encontró transacción en BD: ${paymentLinkId}`);
       return res.json({ success: false, message: 'Transacción no encontrada' });
     }
 
@@ -122,7 +107,6 @@ const handleWebhook = async (req, res) => {
 
     // Si ya está aprobada, no hacer nada
     if (dbTransaction.status === 'APPROVED') {
-      console.log('Transacción ya estaba aprobada en la BD');
       return res.json({ success: true, message: 'Ya procesada' });
     }
 
@@ -138,9 +122,7 @@ const handleWebhook = async (req, res) => {
       dbTransaction.plan_id
     );
 
-    console.log(
-      `Plan ${dbTransaction.plan_name} activado para usuario ${dbTransaction.user_id}`
-    );
+
 
     return res.json({
       success: true,
@@ -164,11 +146,9 @@ const handleWebhook = async (req, res) => {
 const verifyTransaction = async (req, res) => {
   try {
     const { transactionId } = req.params;
-    console.log(`Verificando transacción: ${transactionId}`);
 
     // Obtener detalles de la transacción
     const transaction = await wompiService.getTransactionDetails(transactionId);
-    console.log('Estado de transacción:', transaction.status);
 
     // Verificar si está aprobada
     const isApproved = transaction.status === 'APPROVED';
@@ -200,7 +180,6 @@ const verifyTransaction = async (req, res) => {
 const getPaymentHistory = async (req, res) => {
   try {
     const userId = req.user.id; // Asumiendo middleware de autenticación
-    console.log(`Obteniendo historial de pagos para usuario: ${userId}`);
 
     const history = await wompiService.getUserPaymentHistory(userId);
     res.json(history);
@@ -254,7 +233,6 @@ const getTransactionStatus = async (req, res) => {
 const verifyTransactionDetails = async (req, res) => {
   try {
     const { transactionId } = req.params;
-    console.log(`Verificando detalles de transacción: ${transactionId}`);
 
     if (!transactionId) {
       return res.json({
@@ -284,7 +262,6 @@ const verifyTransactionDetails = async (req, res) => {
       const result = await pool.query(query, [transactionId]);
 
       if (result.rows.length === 0) {
-        console.log(`Transacción ${transactionId} no encontrada en BD local`);
         return res.json({
           success: false,
           statusMessage: 'Transacción no encontrada en la base de datos',
@@ -295,7 +272,6 @@ const verifyTransactionDetails = async (req, res) => {
 
       // Si ya está aprobada en nuestra base de datos
       if (transaction.status === 'APPROVED') {
-        console.log(`Transacción ${transactionId} ya aprobada en BD local`);
         return res.json({
           success: true,
           planId: transaction.plan_id,
@@ -307,9 +283,7 @@ const verifyTransactionDetails = async (req, res) => {
 
       // Si no está aprobada, consultar a Wompi
       try {
-        console.log(
-          `Consultando estado en Wompi para transacción ${transactionId}`
-        );
+    
         const wompiDetails = await wompiService.getTransactionDetails(
           transactionId
         );
@@ -317,7 +291,6 @@ const verifyTransactionDetails = async (req, res) => {
         // Asegurarse de que wompiDetails tenga un estado
         const wompiStatus =
           wompiDetails?.status || wompiDetails?.data?.status || 'PENDING';
-        console.log(`Estado en Wompi: ${wompiStatus}`);
 
         const isApproved = wompiStatus === 'APPROVED';
 
@@ -334,7 +307,6 @@ const verifyTransactionDetails = async (req, res) => {
             transaction.plan_id
           );
 
-          console.log(`Plan actualizado para usuario ${transaction.user_id}`);
 
           return res.json({
             success: true,

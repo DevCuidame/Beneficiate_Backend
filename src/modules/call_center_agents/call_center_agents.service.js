@@ -12,7 +12,7 @@ const getCallCenterAgentById = async (id) => {
 const getCallCenterAgentByUserId = async (userId) => {
   const agent = await callCenterAgentRepository.findCallCenterAgentByUserId(userId);
   if (!agent) {
-    throw new NotFoundError('Agente de call center no encontrado para el usuario');
+    return null;
   }
   return agent;
 };

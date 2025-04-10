@@ -13,9 +13,7 @@ class WompiPaymentService {
   // Generar transacción de pago
   async createPaymentTransaction(amount, currency, userId, planId, userEmail) {
     try {
-      console.log('Creando transacción con datos:', {
-        amount, currency, userId, planId, userEmail
-      });
+
 
       // Validar que el plan exista y el monto sea correcto
       const planInfo = await this.getPlanDetails(planId);
@@ -43,7 +41,6 @@ class WompiPaymentService {
         payment_method_type: 'CARD'
       };
 
-      console.log('Enviando payload a Wompi:', JSON.stringify(payload, null, 2));
 
       const response = await axios.post(
         `${this.wompiBaseUrl}/payment_links`, // Usar payment_links en lugar de transactions
@@ -56,7 +53,6 @@ class WompiPaymentService {
         }
       );
 
-      console.log('Respuesta de Wompi:', JSON.stringify(response.data, null, 2));
 
       // Guardar transacción en base de datos
       await this.saveTransactionLog(
@@ -304,7 +300,6 @@ class WompiPaymentService {
         }
       );
   
-      console.log("Detalles obtenidos:", JSON.stringify(response.data, null, 2));
       
       // Para payment links, necesitamos verificar las transacciones asociadas
       if (response.data.data) {
@@ -318,9 +313,7 @@ class WompiPaymentService {
           }
         );
         
-        console.log("Transacciones encontradas:", 
-          JSON.stringify(transactionsResponse.data?.data, null, 2));
-        
+
         // Si hay transacciones, usar el estado de la más reciente
         const transactions = transactionsResponse.data?.data;
         if (transactions && transactions.length > 0) {

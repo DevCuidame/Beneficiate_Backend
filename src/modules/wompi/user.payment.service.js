@@ -14,13 +14,7 @@ class WompiPaymentService {
   // Generar link de pago
   async createPaymentTransaction(amount, currency, userId, planId, userEmail) {
     try {
-      console.log('Creando link de pago con datos:', {
-        amount,
-        currency,
-        userId,
-        planId,
-        userEmail,
-      });
+
 
       // Validar que el plan exista y el monto sea correcto
       const planInfo = await this.getPlanDetails(planId);
@@ -39,9 +33,7 @@ class WompiPaymentService {
       // Convertir a número y luego a centavos
       const priceInCents = parseInt(cleanPrice);
 
-      console.log(
-        `Precio original: ${planInfo.price}, Limpio: ${cleanPrice}, En centavos: ${priceInCents}`
-      );
+
 
       // Crear referencia única
       const reference = `plan_${planId}_${userId}_${Date.now()}`;
@@ -76,10 +68,7 @@ class WompiPaymentService {
         ],
       };
 
-      console.log(
-        'Enviando payload a Wompi:',
-        JSON.stringify(payload, null, 2)
-      );
+
 
       const response = await axios.post(
         `${this.wompiBaseUrl}/payment_links`,
@@ -92,10 +81,6 @@ class WompiPaymentService {
         }
       );
 
-      console.log(
-        'Respuesta de Wompi:',
-        JSON.stringify(response.data, null, 2)
-      );
 
       // Extraer correctamente el ID de la transacción
       const transactionId = response.data.data?.id || response.data.id;
@@ -105,7 +90,6 @@ class WompiPaymentService {
         throw new PaymentError('Error obteniendo ID de transacción');
       }
 
-      console.log(`ID de transacción extraído: ${transactionId}`);
 
       // Guardar transacción en base de datos
       await this.saveTransactionLog(
@@ -207,19 +191,16 @@ class WompiPaymentService {
   // Webhook para procesar pagos
   async handleWompiWebhook(payload) {
     const { event, data, timestamp, signature, environment } = payload;
-    console.log(`Procesando webhook: ${event}`, { timestamp, environment });
 
     if (event === 'transaction.updated') {
       try {
         // Extraer datos de la transacción
         const transaction = data.transaction;
-        console.log('Datos de transacción:', transaction);
 
         // Verificar si está aprobada
         if (transaction.status === 'APPROVED') {
           // Obtener el ID del payment_link
           const paymentLinkId = transaction.payment_link_id;
-          console.log(`Payment Link ID: ${paymentLinkId}`);
 
           if (!paymentLinkId) {
             console.error('No se encontró paymentLinkId en el webhook');
@@ -255,7 +236,6 @@ class WompiPaymentService {
             return { success: false };
           }
         } else {
-          console.log(`Transacción no aprobada: ${transaction.status}`);
           return { success: false };
         }
       } catch (error) {
@@ -263,7 +243,6 @@ class WompiPaymentService {
         throw new PaymentError('Error procesando webhook de Wompi');
       }
     } else {
-      console.log(`Evento ignorado: ${event}`);
       return { success: false, message: 'Evento no procesable' };
     }
   }
@@ -358,9 +337,7 @@ class WompiPaymentService {
     currency = 'COP'
   ) {
     try {
-      console.log(
-        `Guardando log de transacción: ID=${transactionId}, Usuario=${userId}, Plan=${planId}`
-      );
+
 
       const query = `
       INSERT INTO user_transactions (
@@ -386,7 +363,6 @@ class WompiPaymentService {
         currency,
       ]);
 
-      console.log('Log de transacción guardado exitosamente');
     } catch (error) {
       console.error('Error guardando log de transacción:', error);
     }
@@ -420,7 +396,6 @@ class WompiPaymentService {
 
 async getTransactionDetails(transactionId) {
   try {
-    console.log(`Obteniendo detalles para transacción ${transactionId} de Wompi`);
     
     // Primero intentar como payment_link
     try {
@@ -433,7 +408,6 @@ async getTransactionDetails(transactionId) {
         }
       );
       
-      console.log('Respuesta de payment_link:', JSON.stringify(response.data, null, 2));
       
       // Extraer data anidada si existe
       const linkData = response.data.data || response.data;
@@ -450,7 +424,6 @@ async getTransactionDetails(transactionId) {
         );
         
         const transactions = txResponse.data?.data || [];
-        console.log(`Encontradas ${transactions.length} transacciones para el link`);
         
         if (transactions.length > 0) {
           // Ordenar por fecha descendente
@@ -465,7 +438,6 @@ async getTransactionDetails(transactionId) {
           };
         }
       } catch (txError) {
-        console.log('Error buscando transacciones:', txError.message);
       }
       
       // Si no hay transacciones o falló la búsqueda, devolver el payment link
@@ -474,7 +446,6 @@ async getTransactionDetails(transactionId) {
         status: 'PENDING' // Asumimos pendiente si no hay transacciones
       };
     } catch (linkError) {
-      console.log('No es un payment link, intentando como transacción directa');
       
       // Si falla como payment link, intentar como transacción
       const response = await axios.get(
@@ -487,7 +458,6 @@ async getTransactionDetails(transactionId) {
       );
       
       const txData = response.data.data || response.data;
-      console.log('Respuesta de transaction:', JSON.stringify(txData, null, 2));
       
       return txData;
     }
