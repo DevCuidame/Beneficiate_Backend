@@ -418,39 +418,89 @@ class WompiPaymentService {
       .digest('hex');
   }
 
-  // Obtener detalles de transacción
-  async getTransactionDetails(transactionId) {
+async getTransactionDetails(transactionId) {
+  try {
+    console.log(`Obteniendo detalles para transacción ${transactionId} de Wompi`);
+    
+    // Primero intentar como payment_link
     try {
-      // Primero intentamos obtener como payment link
-      try {
-        const response = await axios.get(
-          `${this.wompiBaseUrl}/payment_links/${transactionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${this.wompiPrivateKey}`,
-            },
+      const response = await axios.get(
+        `${this.wompiBaseUrl}/payment_links/${transactionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.wompiPrivateKey}`
           }
-        );
-        return response.data;
-      } catch (linkError) {
-        // Si falla, intentamos como transacción normal
-        const response = await axios.get(
-          `${this.wompiBaseUrl}/transactions/${transactionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${this.wompiPrivateKey}`,
-            },
-          }
-        );
-        return response.data.data || response.data;
-      }
-    } catch (error) {
-      console.error('Error obteniendo detalles de transacción:', error);
-      throw new PaymentError(
-        'No se pudieron obtener los detalles de la transacción'
+        }
       );
+      
+      console.log('Respuesta de payment_link:', JSON.stringify(response.data, null, 2));
+      
+      // Extraer data anidada si existe
+      const linkData = response.data.data || response.data;
+      
+      // Buscar transacciones asociadas a este payment link
+      try {
+        const txResponse = await axios.get(
+          `${this.wompiBaseUrl}/transactions?payment_link_id=${transactionId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${this.wompiPrivateKey}`
+            }
+          }
+        );
+        
+        const transactions = txResponse.data?.data || [];
+        console.log(`Encontradas ${transactions.length} transacciones para el link`);
+        
+        if (transactions.length > 0) {
+          // Ordenar por fecha descendente
+          transactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          const latestTx = transactions[0];
+          
+          // Combinar datos del link con la transacción más reciente
+          return {
+            ...linkData,
+            status: latestTx.status,
+            transaction: latestTx
+          };
+        }
+      } catch (txError) {
+        console.log('Error buscando transacciones:', txError.message);
+      }
+      
+      // Si no hay transacciones o falló la búsqueda, devolver el payment link
+      return {
+        ...linkData,
+        status: 'PENDING' // Asumimos pendiente si no hay transacciones
+      };
+    } catch (linkError) {
+      console.log('No es un payment link, intentando como transacción directa');
+      
+      // Si falla como payment link, intentar como transacción
+      const response = await axios.get(
+        `${this.wompiBaseUrl}/transactions/${transactionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.wompiPrivateKey}`
+          }
+        }
+      );
+      
+      const txData = response.data.data || response.data;
+      console.log('Respuesta de transaction:', JSON.stringify(txData, null, 2));
+      
+      return txData;
     }
+  } catch (error) {
+    console.error('Error obteniendo detalles de la transacción:', error.message);
+    // En vez de fallar, devolver un objeto con estado predeterminado
+    return {
+      id: transactionId,
+      status: 'UNKNOWN',
+      error: error.message
+    };
   }
+}
 
   // Obtener historial de pagos de un usuario
   async getUserPaymentHistory(userId) {
