@@ -48,7 +48,7 @@ class WompiPaymentService {
         amount_in_cents: priceInCents,
         redirect_url:
           process.env.WOMPI_REDIRECT_URL ||
-          'https://app.beneficiate.co/payment/result',
+          'https://beneficiate.co/home-desktop',
         expires_at: this.getExpirationDate(),
         collect_shipping: false,
         sku: `PLAN-${planId}`,
