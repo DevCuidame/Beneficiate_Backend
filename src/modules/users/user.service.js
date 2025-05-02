@@ -31,6 +31,7 @@ const getUserById = async (id) => {
   }
 
   const plan = await planService.getPlanById(user.plan_id);
+
   const images = await imageService.getUserImages(user.id);
   const image = images.length > 0 ? images[0] : null;
   const location = await townshipService.getTownshipById(user.city_id);
@@ -67,7 +68,9 @@ const findByIdentification = async (
     return { ...user, plan, image, location, is_user: true };
   } else if (beneficiary) {
     console.log(beneficiary);
-    const images = await beneficiaryImageService.getBeneficiaryImages(beneficiary.id);
+    const images = await beneficiaryImageService.getBeneficiaryImages(
+      beneficiary.id
+    );
     const image = images.length > 0 ? images[0] : null;
     const location = await townshipService.getTownshipById(beneficiary.city_id);
 
@@ -80,8 +83,8 @@ const getUser = async (id) => {
 
   if (!user) {
     throw new NotFoundError('Usuario no encontrado');
-  } 
+  }
   return user;
-}
+};
 
 module.exports = { findByEmail, getUserById, findByIdentification, getUser };

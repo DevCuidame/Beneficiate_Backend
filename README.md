@@ -1,67 +1,43 @@
 # 🚀 Beneficiate
 
-## 📌 Project Overview
-This project follows a clean architecture approach using Node.js and PostgreSQL, ensuring modularity, scalability, and maintainability.
+## 📌 Descripción del Proyecto
+Beneficiate es una plataforma integral de servicios de salud que permite a los usuarios gestionar citas médicas, acceder a beneficios de salud y conectarse con profesionales médicos. La aplicación sigue una arquitectura limpia para garantizar modularidad, escalabilidad y mantenibilidad.
 
-## 📂 Folder Structure
+
+## 📂 Estructura de Carpetas
+
 ```
-📦 mi-proyecto
+📦 beneficiate
  ┣ 📂 src
- ┃ ┣ 📂 config          # Database configuration
- ┃ ┣ 📂 core            # Core utilities
- ┃ ┣ 📂 middleware      # Authentication and validation middleware
- ┃ ┣ 📂 modules         # Features
- ┃ ┣ 📂 utils           # Utility functions
- ┃ ┣ 📜 routes.js       # Centralized route management
- ┃ ┣ 📜 server.js       # Server entry point
- ┣ 📜 .env              # Environment variables
- ┣ 📜 package.json      # Project dependencies
- ┣ 📜 README.md         # Documentation
+ ┃ ┣ 📂 config          # Configuración de base de datos, constantes y rutas
+ ┃ ┣ 📂 core            # Componentes centrales (errores, validaciones, respuestas)
+ ┃ ┣ 📂 middleware      # Middleware de autenticación y validación
+ ┃ ┣ 📂 modules         # Módulos funcionales (usuarios, citas, etc.)
+ ┃ ┣ 📂 utils           # Utilidades (fecha, JWT, imágenes, etc.)
+ ┃ ┣ 📜 routes.js       # Configuración centralizada de rutas
+ ┃ ┣ 📜 server.js       # Punto de entrada del servidor
+ ┣ 📜 .env              # Variables de entorno
+ ┣ 📜 package.json      # Dependencias del proyecto
+ ┣ 📜 README.md         # Documentación básica
 ```
 
-## ⚡ Installation & Setup
+## ⚙️ Instalación Rápida
 
-### 1️⃣ Clone Repository
 ```sh
-git clone 
-cd mi-proyecto
-```
+# Clonar repositorio
+git clone https://github.com/DevCuidame/Beneficiate_Backend
+cd Beneficiate_Backend
 
-### 2️⃣ Install Dependencies
-```sh
+# Instalar dependencias
 npm install
+
+# Configurar .env (ver ./docs/INSTALLATION.md)
+
+# Iniciar 
+npm run dev
+
 ```
 
-### 3️⃣ Configure Environment Variables
-Create a `.env` file in the root directory and fill in your database and JWT secrets:
-```env
-PORT=3000
-DB_USER=
-DB_HOST=
-DB_NAME=
-DB_PASS=
-DB_PORT=5432
-JWT_SECRET=
-```
+## 📄 Licencia
 
-### 4️⃣ Set Up PostgreSQL Database
-Ensure PostgreSQL is running, then create the database.
-
-### 5️⃣ Start the Server
-```sh
-npm run dev  # Development mode with nodemon
-npm start    # Production mode
-```
-
-### 7️⃣ Test API
-Use Postman or curl to test endpoints:
-```sh
-curl -X GET http://localhost:3000/
-```
-Expected response:
-```json
-{ "message": "Server is running" }
-```
-
-## 📌 License
-MIT License © 2025 Opieka
+MIT License © 2025 Opieka SAS

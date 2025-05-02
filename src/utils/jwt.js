@@ -10,6 +10,8 @@ const generateRefreshToken = (payload) => {
 };
 
 const verifyToken = (token, secret) => {
+  console.log(token);
+  console.log(secret);
   try {
     return jwt.verify(token, secret);
   } catch (error) {

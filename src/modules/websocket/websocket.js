@@ -2,6 +2,7 @@
 const WebSocket = require('ws');
 const jwt = require('../../utils/jwt');
 const userRepository = require('../users/user.repository');
+const userService = require('../users/user.service');
 const websocketEvents = require('./websocket-events');
 const chatService = require('../chat/chat.service');
 const appointmentService = require('../appointment/appointment.service');
@@ -31,10 +32,22 @@ const initializeWebSocket = (server) => {
       }
 
       // Obtener datos actualizados del usuario desde la base de datos
-      const userData = await userRepository.getUserById(decodedToken.id);
+      const userData = await userService.getUserById(decodedToken.id);
       if (!userData) {
         console.error(`Usuario no encontrado en BD: ${decodedToken.id}`);
         socket.destroy();
+        return;
+      }
+
+      // Verificar si el usuario tiene un plan activo
+      if (!userData.plan) {
+        console.log(`Usuario ${userData.id} no tiene un plan activo`);
+        // En lugar de destruir el socket, podemos actualizarlo para mostrar un mensaje claro
+        request.userWithoutPlan = true;
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          ws.userWithoutPlan = true;
+          wss.emit('connection', ws, request);
+        });
         return;
       }
 
@@ -77,13 +90,13 @@ const initializeWebSocket = (server) => {
   });
 
   wss.on('connection', async (ws, req) => {
-    const user = req.user;
 
-    if (!user) {
-      ws.close();
-      return;
-    }
+  const user = req.user;
 
+  if (!user) {
+    ws.close();
+    return;
+  }
     try {
       ws.user = user;
       let isAgent = false;
@@ -91,9 +104,11 @@ const initializeWebSocket = (server) => {
       // Verificar si el usuario es un agente de call center
       if (user.isAgent) {
         try {
-          const agent = user.agentData || await callCenterAgentService.getCallCenterAgentById(user.agentId);
+          const agent =
+            user.agentData ||
+            (await callCenterAgentService.getCallCenterAgentById(user.agentId));
           ws.agent = agent;
-          
+
           if (agent && agent.status === 'ACTIVE') {
             isAgent = true;
             ws.agent = agent;
