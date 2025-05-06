@@ -148,6 +148,20 @@ const initializeWebSocket = (server) => {
                 users: onlineUsersList,
               })
             );
+
+            try {
+              const appointments =
+                await appointmentService.getAllAppointments();
+              ws.send(
+                JSON.stringify({
+                  event: 'all_appointments',
+                  appointments,
+                })
+              );
+              ws.botState = null;
+            } catch (appointmentError) {
+              console.error('Error obteniendo citas:', appointmentError);
+            }
           }
         } catch (agentError) {
           console.error('Error verificando estado de agente:', agentError);
