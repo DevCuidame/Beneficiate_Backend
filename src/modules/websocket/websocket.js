@@ -39,18 +39,6 @@ const initializeWebSocket = (server) => {
         return;
       }
 
-      // Verificar si el usuario tiene un plan activo
-      if (!userData.plan) {
-        console.log(`Usuario ${userData.id} no tiene un plan activo`);
-        // En lugar de destruir el socket, podemos actualizarlo para mostrar un mensaje claro
-        request.userWithoutPlan = true;
-        wss.handleUpgrade(request, socket, head, (ws) => {
-          ws.userWithoutPlan = true;
-          wss.emit('connection', ws, request);
-        });
-        return;
-      }
-
       // Verificar si el usuario es un agente y si está activo
       let isAgent = false;
       let agentData = null;
@@ -72,6 +60,18 @@ const initializeWebSocket = (server) => {
         );
       }
 
+      // Verificar si el usuario tiene un plan activo SOLO si NO es un agente
+      if (!isAgent && !userData.plan) {
+        console.log(`Usuario ${userData.id} no tiene un plan activo`);
+        // En lugar de destruir el socket, podemos actualizarlo para mostrar un mensaje claro
+        request.userWithoutPlan = true;
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          ws.userWithoutPlan = true;
+          wss.emit('connection', ws, request);
+        });
+        return;
+      }
+
       const user = {
         ...userData,
         isAgent,
@@ -90,13 +90,12 @@ const initializeWebSocket = (server) => {
   });
 
   wss.on('connection', async (ws, req) => {
+    const user = req.user;
 
-  const user = req.user;
-
-  if (!user) {
-    ws.close();
-    return;
-  }
+    if (!user) {
+      ws.close();
+      return;
+    }
     try {
       ws.user = user;
       let isAgent = false;
