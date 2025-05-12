@@ -213,14 +213,15 @@ const createBeneficiary = async (beneficiaryData) => {
     funeral_insurance,
     removed,
     created_at,
+    email
   } = beneficiaryData;
 
   const result = await pool.query(
     `INSERT INTO beneficiaries (
       user_id, first_name, last_name, identification_type, identification_number, 
       phone, birth_date, gender, city_id, address, blood_type, 
-      health_provider, prepaid_health, work_risk_insurance, funeral_insurance, removed, created_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      health_provider, prepaid_health, work_risk_insurance, funeral_insurance, removed, created_at, email
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
     [
       user_id,
       first_name,
@@ -239,6 +240,7 @@ const createBeneficiary = async (beneficiaryData) => {
       funeral_insurance,
       removed,
       created_at,
+      email
     ]
   );
 
@@ -261,8 +263,9 @@ const updateBeneficiary = async (id, beneficiaryData) => {
       health_provider = $11, 
       prepaid_health = $12, 
       work_risk_insurance = $13, 
-      funeral_insurance = $14
-    WHERE id = $15 
+      funeral_insurance = $14,
+      email = $15
+    WHERE id = $16
     RETURNING *`,
     [
       beneficiaryData.first_name,

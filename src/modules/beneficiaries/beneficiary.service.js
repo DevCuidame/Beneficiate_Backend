@@ -32,6 +32,85 @@ const processImage = async (beneficiaryId, publicName, base64) => {
   }
 };
 
+// Añadir esta función después de processImage
+const createUserAccount = async (beneficiaryData) => {
+  // Solo proceder si se proporciona un email (significa que es mayor de edad)
+  if (!beneficiaryData.email) {
+    return null;
+  }
+
+  // Verificar si ya existe un usuario con ese correo
+  const existingUser = await userRepository.findByEmail(beneficiaryData.email);
+  if (existingUser) {
+    throw new ValidationError('Ya existe un usuario con este correo electrónico');
+  }
+
+  // Generar contraseña aleatoria
+  const tempPassword = nanoid(10);
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+  // Crear el usuario
+  const userData = {
+    email: beneficiaryData.email,
+    password: hashedPassword,
+    first_name: beneficiaryData.first_name,
+    last_name: beneficiaryData.last_name,
+    identification_type: beneficiaryData.identification_type,
+    identification_number: beneficiaryData.identification_number,
+    phone: beneficiaryData.phone,
+    verified: false,
+    role: 'beneficiary',
+    created_at: new Date()
+  };
+
+  const newUser = await userRepository.createUser(userData);
+
+  // Enviar correo con instrucciones para cambiar la contraseña
+  await sendPasswordResetEmail(newUser, tempPassword);
+
+  return newUser;
+};
+
+
+const sendPasswordResetEmail = async (user, tempPassword) => {
+  try {
+    // Generar token para restablecimiento de contraseña
+    const resetToken = emailVerificationService.generateVerificationToken(user);
+    
+    // Guardar el token en la base de datos
+    await userRepository.savePasswordResetToken(user.id, resetToken);
+    
+    // Construir enlace para restablecer contraseña
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    
+    // Configurar correo
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Bienvenido - Configura tu contraseña',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Bienvenido, ${user.first_name}!</h2>
+          <p>Has sido registrado como beneficiario en nuestra plataforma.</p>
+          <p>Tu contraseña temporal es: <strong>${tempPassword}</strong></p>
+          <p>Por favor, usa el siguiente enlace para establecer una nueva contraseña:</p>
+          <a href="${resetLink}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Establecer Contraseña</a>
+          <p>Este enlace expirará en 24 horas.</p>
+          <p>Si no solicitaste esta cuenta, por favor ignora este mensaje.</p>
+        </div>
+      `
+    };
+
+    // Enviar correo
+    await transporter.sendMail(mailOptions);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error al enviar correo de restablecimiento:', error);
+    throw new Error('No se pudo enviar el correo de restablecimiento de contraseña');
+  }
+};
+
 const getBeneficiaryByIdentification = async (identification_number) => {
   const beneficiary = await beneficiaryRepository.findByIdentification(
     identification_number
@@ -160,6 +239,15 @@ const createBeneficiary = async (beneficiaryData) => {
     beneficiaryData
   );
 
+  if (beneficiaryData.email) {
+    try {
+      await createUserAccount(beneficiaryData);
+    } catch (error) {
+      console.error('Error al crear cuenta de usuario:', error);
+    }
+  }
+
+
   if (beneficiaryData.base_64) {
     await processImage(
       newBeneficiary.id,
@@ -199,6 +287,19 @@ const updateBeneficiary = async (id, beneficiaryData) => {
     id,
     beneficiaryData
   );
+
+  if (beneficiaryData.email) {
+    try {
+      // Verificar si ya existe una cuenta para este beneficiario
+      const existingUser = await userRepository.findByEmail(beneficiaryData.email);
+      if (!existingUser) {
+        await createUserAccount(beneficiaryData);
+      }
+    } catch (error) {
+      console.error('Error al crear/actualizar cuenta de usuario:', error);
+      // No detener la actualización del beneficiario si falla la creación de la cuenta
+    }
+  }
 
   if (beneficiaryData.base_64 && beneficiaryData.public_name) {
     await processImage(
