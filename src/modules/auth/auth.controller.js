@@ -5,6 +5,10 @@ const callCenterAgentService = require('../call_center_agents/call_center_agents
 const beneficiaryService = require('../beneficiaries/beneficiary.service');
 const { successResponse, errorResponse } = require('../../core/responses');
 const { ValidationError } = require('../../core/errors');
+const beneficiaryImageRepository = require('../images/beneficiary/beneficiary.images.repository');
+const townshipRepository = require('../township/township.repository');
+const beneficiaryRepository = require('../beneficiaries/beneficiary.repository');
+
 
 const login = async (req, res) => {
   try {
@@ -16,11 +20,56 @@ const login = async (req, res) => {
     }
 
     // Extraer el tipo de cuenta del resultado del login
-    const accountType = loginResult.user.accountType;
+    const { accountType, token } = loginResult;
 
     if (accountType === 'beneficiary') {
-      // Si es un beneficiario, no buscar información adicional de usuario
-      successResponse(res, loginResult, 'Login exitoso');
+      // Si es un beneficiario, obtener información completa del beneficiario
+      try {
+        const beneficiary = await beneficiaryRepository.findByEmail(email);
+        if (!beneficiary) {
+          throw new NotFoundError('Beneficiario no encontrado');
+        }
+        
+        // Eliminar password
+        if (beneficiary.password) {
+          delete beneficiary.password;
+        }
+        
+        // Obtener datos adicionales
+        const location = await townshipRepository.findLocationByTownshipId(beneficiary.city_id);
+        const images = await beneficiaryImageRepository.getImagesByBeneficiary(beneficiary.id);
+        const image = images && images.length > 0 ? images[0] : null;
+        const healthData = await beneficiaryRepository.getBeneficiaryHealthData(beneficiary.id) || {
+          distinctives: [],
+          disabilities: [],
+          allergies: [],
+          diseases: [],
+          family_history: [],
+          medical_history: [],
+          medications: [],
+          vaccinations: []
+        };
+        
+        // Crear objeto usuario enriquecido
+        const enrichedBeneficiary = {
+          ...beneficiary,
+          location,
+          image,
+          ...healthData,
+          isAgent: false,
+          agentActive: false,
+          accountType: 'beneficiary'
+        };
+        
+        successResponse(res, { token, user: enrichedBeneficiary }, 'Login exitoso');
+      } catch (error) {
+        // Si hay un error, usar datos básicos
+        const beneficiary = await beneficiaryRepository.findByEmail(email);
+        if (beneficiary && beneficiary.password) {
+          delete beneficiary.password;
+        }
+        successResponse(res, { token, user: beneficiary }, 'Login exitoso');
+      }
     } else {
       // Si es un usuario, proceder como de costumbre
       try {
@@ -28,6 +77,15 @@ const login = async (req, res) => {
         const beneficiaries = await beneficiaryService.getBeneficiariesByUser(
           user.id
         );
+
+        // Eliminar password de beneficiarios
+        if (beneficiaries && beneficiaries.length > 0) {
+          beneficiaries.forEach(beneficiary => {
+            if (beneficiary.password) {
+              delete beneficiary.password;
+            }
+          });
+        }
 
         let isAgent = false;
         let agentActive = false;
@@ -47,11 +105,17 @@ const login = async (req, res) => {
 
         user.isAgent = isAgent;
         user.agentActive = agentActive;
+        user.accountType = 'user';
 
-        successResponse(res, { token: loginResult.token, user, beneficiaries }, 'Login exitoso');
+        successResponse(res, { token, user, beneficiaries }, 'Login exitoso');
       } catch (error) {
-        // Si hay un error al buscar información adicional, usar la información básica
-        successResponse(res, loginResult, 'Login exitoso');
+        // Si hay un error al buscar información adicional, usar información básica
+        console.error('Error al obtener datos del usuario:', error);
+        const user = await userRepository.findByEmail(email);
+        if (user && user.password) {
+          delete user.password;
+        }
+        successResponse(res, { token, user }, 'Login exitoso');
       }
     }
   } catch (error) {

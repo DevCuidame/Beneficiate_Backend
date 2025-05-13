@@ -11,9 +11,7 @@ const emailVerificationService = require('./verification/email.verification.serv
 const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
 const userService = require('../users/user.service');
 const beneficiaryRepository = require('../beneficiaries/beneficiary.repository');
-const beneficiaryService = require('../beneficiaries/beneficiary.service');
-const beneficiaryImageRepository = require('../images/beneficiary/beneficiary.images.repository');
-const townshipRepository = require('../township/township.repository');
+
 const userRepository = require('../users/user.repository');
 
 const processImage = async (id, publicName, base64) => {
@@ -41,19 +39,15 @@ const processImage = async (id, publicName, base64) => {
 
 const login = async (email, password) => {
   email = email.toLowerCase();
-  console.log(`Intento de login para email: ${email}`);
 
   // Buscar en la tabla de usuarios
   const user = await authRepository.findByEmail(email);
-  console.log('Usuario encontrado:', user ? 'Sí' : 'No');
 
   // Buscar en la tabla de beneficiarios
   const beneficiary = await beneficiaryRepository.findByEmail(email);
-  console.log('Beneficiario encontrado:', beneficiary ? 'Sí' : 'No');
-
+  
   // Si no existe ni como usuario ni como beneficiario
   if (!user && !beneficiary) {
-    console.log('No se encontró ni usuario ni beneficiario con este email');
     throw new UnauthorizedError('Credenciales Inválidas');
   }
 
@@ -113,101 +107,17 @@ const login = async (email, password) => {
     delete accountData.password;
   }
 
-  // Preparar la respuesta según el tipo de cuenta
-  if (accountType === 'beneficiary') {
-    // Enriquecer la información del beneficiario
-    try {
-      // Obtener la ubicación
-      const location = await townshipRepository.findLocationByTownshipId(accountData.city_id);
-      
-      // Obtener imagen
-      const images = await beneficiaryImageRepository.getImagesByBeneficiary(accountData.id);
-      const image = images && images.length > 0 ? images[0] : null;
-      
-      // Obtener datos de salud
-      const healthData = await beneficiaryRepository.getBeneficiaryHealthData(accountData.id) || {
-        distinctives: [],
-        disabilities: [],
-        allergies: [],
-        diseases: [],
-        family_history: [],
-        medical_history: [],
-        medications: [],
-        vaccinations: []
-      };
-
-      // Obtener detalles del usuario propietario si es necesario
-      let ownerUser = null;
-      if (accountData.user_id) {
-        try {
-          ownerUser = await userRepository.getUserById(accountData.user_id);
-          if (ownerUser && ownerUser.password) {
-            delete ownerUser.password;
-          }
-        } catch (error) {
-          console.error('Error al obtener detalles del usuario propietario:', error);
-        }
-      }
-
-      const enrichedAccountData = {
-        ...accountData,
-        location,
-        image,
-        healthData,
-        ownerUser,
-        isAgent: false,
-        agentActive: false,
-        accountType: 'beneficiary'
-      };
-
-      return {
-        accessToken,
-        refreshToken,
-        user: enrichedAccountData
-      };
-    } catch (error) {
-      console.error('Error al enriquecer datos del beneficiario:', error);
-      
-      // Si hay un error al obtener datos adicionales, devolver la información básica
-      return {
-        accessToken,
-        refreshToken,
-        user: {
-          ...accountData,
-          isAgent: false,
-          agentActive: false,
-          accountType: 'beneficiary'
-        }
-      };
-    }
-  } else {
-    // Para usuarios, mantener la estructura existente
-    let isAgent = false;
-    let agentActive = false;
-    
-    try {
-      const agent = await callCenterAgentService.getCallCenterAgentByUserId(accountData.id);
-      if (agent) {
-        isAgent = true;
-        agentActive = agent.status === 'ACTIVE';
-      }
-    } catch (error) {
-      isAgent = false;
-      agentActive = false;
-    }
-
-    return {
+  // Devolver solo los tokens - La información detallada será obtenida por el controlador
+  return {
+    token: {
       accessToken,
-      refreshToken,
-      user: {
-        ...accountData,
-        isAgent,
-        agentActive,
-        accountType: 'user'
-      }
-    };
-  }
+      refreshToken
+    },
+    accountType
+  };
 };
+
+
 
 // const login = async (email, password) => {
 //   email = email.toLowerCase();
