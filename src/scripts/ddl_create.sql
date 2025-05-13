@@ -823,3 +823,12 @@ BEGIN
     END IF;
 END
 $$;
+
+
+-- Refresh tokens to beneficiaries
+
+CREATE TABLE IF NOT EXISTS beneficiary_refresh_tokens (
+  beneficiary_id INTEGER PRIMARY KEY REFERENCES beneficiaries(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

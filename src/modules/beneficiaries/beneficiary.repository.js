@@ -9,13 +9,31 @@ const findByIdentification = async (identification_number) => {
   return result.rows[0];
 };
 
-const findByTypeIdentification = async (identification_type, identification_number) => {
+const findByTypeIdentification = async (
+  identification_type,
+  identification_number
+) => {
   const result = await pool.query(
     'SELECT * FROM beneficiaries WHERE identification_type = $1 AND identification_number = $2',
     [identification_type, identification_number]
   );
 
   return result.rows[0];
+};
+
+const findByEmail = async (email) => {
+  const result = await pool.query(
+    `SELECT 
+      *
+     FROM beneficiaries 
+     WHERE email = $1;`,
+    [email]
+  );
+
+  return formatDatesInData(result.rows[0] || null, [
+    'birth_date',
+    'created_at',
+  ]);
 };
 
 const findById = async (id) => {
@@ -31,9 +49,9 @@ const getBeneficiaryByUserId = async (beneficiaryId, userId) => {
   return result.rows[0] || null;
 };
 
-
 const countUserBeneficiaries = async (userId) => {
-  const query = 'SELECT COUNT(*) AS count FROM beneficiaries WHERE user_id = $1';
+  const query =
+    'SELECT COUNT(*) AS count FROM beneficiaries WHERE user_id = $1';
   const result = await pool.query(query, [userId]);
   return parseInt(result.rows[0].count, 10);
 };
@@ -213,7 +231,7 @@ const createBeneficiary = async (beneficiaryData) => {
     funeral_insurance,
     removed,
     created_at,
-    email
+    email,
   } = beneficiaryData;
 
   const result = await pool.query(
@@ -240,7 +258,7 @@ const createBeneficiary = async (beneficiaryData) => {
       funeral_insurance,
       removed,
       created_at,
-      email
+      email,
     ]
   );
 
@@ -298,6 +316,23 @@ const removeBeneficiary = async (id) => {
   return { message: 'Beneficiario Eliminado' };
 };
 
+const updateBeneficiaryPassword = async (beneficiaryId, hashedPassword) => {
+  try {
+    const result = await pool.query(
+      'UPDATE beneficiaries SET password = $1 WHERE id = $2 RETURNING *',
+      [hashedPassword, beneficiaryId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error(`No se encontró beneficiario con ID ${beneficiaryId}`);
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error al actualizar contraseña del beneficiario:', error);
+    throw error;
+  }
+};
 module.exports = {
   findByIdentification,
   findByUserId,
@@ -309,5 +344,7 @@ module.exports = {
   getBeneficiaryHealthData,
   getBeneficiaryByUserId,
   countUserBeneficiaries,
-  findByTypeIdentification
+  findByTypeIdentification,
+  findByEmail,
+  updateBeneficiaryPassword,
 };

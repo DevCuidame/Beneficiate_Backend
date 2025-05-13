@@ -9,37 +9,51 @@ const { ValidationError } = require('../../core/errors');
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const token = await authService.login(email, password);
+    const loginResult = await authService.login(email, password);
 
-    if (!token) {
+    if (!loginResult) {
       throw new UnauthorizedError('Credenciales inválidas');
     }
 
-    const user = await userService.findByEmail(email);
-    const beneficiaries = await beneficiaryService.getBeneficiariesByUser(
-      user.id
-    );
+    // Extraer el tipo de cuenta del resultado del login
+    const accountType = loginResult.user.accountType;
 
-    let isAgent = false;
-    let agentActive = false;
-    try {
-      const agent = await callCenterAgentService.getCallCenterAgentByUserId(
-        user.id
-      );
-      if (agent) {
-        isAgent = true;
-        agentActive = agent.status === 'ACTIVE';
-        user.agentId = isAgent ? agent.id : null;
+    if (accountType === 'beneficiary') {
+      // Si es un beneficiario, no buscar información adicional de usuario
+      successResponse(res, loginResult, 'Login exitoso');
+    } else {
+      // Si es un usuario, proceder como de costumbre
+      try {
+        const user = await userService.findByEmail(email);
+        const beneficiaries = await beneficiaryService.getBeneficiariesByUser(
+          user.id
+        );
+
+        let isAgent = false;
+        let agentActive = false;
+        try {
+          const agent = await callCenterAgentService.getCallCenterAgentByUserId(
+            user.id
+          );
+          if (agent) {
+            isAgent = true;
+            agentActive = agent.status === 'ACTIVE';
+            user.agentId = isAgent ? agent.id : null;
+          }
+        } catch (error) {
+          isAgent = false;
+          agentActive = false;
+        }
+
+        user.isAgent = isAgent;
+        user.agentActive = agentActive;
+
+        successResponse(res, { token: loginResult.token, user, beneficiaries }, 'Login exitoso');
+      } catch (error) {
+        // Si hay un error al buscar información adicional, usar la información básica
+        successResponse(res, loginResult, 'Login exitoso');
       }
-    } catch (error) {
-      isAgent = false;
-      agentActive = false;
     }
-
-    user.isAgent = isAgent;
-    user.agentActive = agentActive;
-
-    successResponse(res, { token, user, beneficiaries }, 'Login exitoso');
   } catch (error) {
     errorResponse(res, error);
   }

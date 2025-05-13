@@ -64,19 +64,46 @@ const verifyUser = async (email) => {
   return result.rowCount > 0;
 };
 
-const saveRefreshToken = async (userId, token) => {
-  await pool.query(
-    'INSERT INTO refresh_tokens (user_id, token) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET token = $2',
-    [userId, token]
-  );
+const saveRefreshToken = async (id, token, accountType = 'user') => {
+  try {
+    if (accountType === 'beneficiary') {
+      await pool.query(
+        'INSERT INTO beneficiary_refresh_tokens (beneficiary_id, token) VALUES ($1, $2) ON CONFLICT (beneficiary_id) DO UPDATE SET token = $2',
+        [id, token]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO refresh_tokens (user_id, token) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET token = $2',
+        [id, token]
+      );
+    }
+  } catch (error) {
+    console.error('Error al guardar refresh token:', error);
+    throw error;
+  }
 };
 
-const findRefreshToken = async (userId, token) => {
-  const result = await pool.query(
-    'SELECT token FROM refresh_tokens WHERE user_id = $1 AND token = $2',
-    [userId, token]
-  );
-  return result.rowCount > 0;
+const findRefreshToken = async (id, token, accountType = 'user') => {
+  try {
+    let result;
+    
+    if (accountType === 'beneficiary') {
+      result = await pool.query(
+        'SELECT token FROM beneficiary_refresh_tokens WHERE beneficiary_id = $1 AND token = $2',
+        [id, token]
+      );
+    } else {
+      result = await pool.query(
+        'SELECT token FROM refresh_tokens WHERE user_id = $1 AND token = $2',
+        [id, token]
+      );
+    }
+    
+    return result.rowCount > 0;
+  } catch (error) {
+    console.error('Error al buscar refresh token:', error);
+    throw error;
+  }
 };
 
 // Eliminar datos relacionados con el usuario

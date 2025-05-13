@@ -10,6 +10,11 @@ const PATHS = require('../../config/paths');
 const emailVerificationService = require('./verification/email.verification.service');
 const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
 const userService = require('../users/user.service');
+const beneficiaryRepository = require('../beneficiaries/beneficiary.repository');
+const beneficiaryService = require('../beneficiaries/beneficiary.service');
+const beneficiaryImageRepository = require('../images/beneficiary/beneficiary.images.repository');
+const townshipRepository = require('../township/township.repository');
+const userRepository = require('../users/user.repository');
 
 const processImage = async (id, publicName, base64) => {
   const { nanoid } = await import('nanoid');
@@ -36,49 +41,222 @@ const processImage = async (id, publicName, base64) => {
 
 const login = async (email, password) => {
   email = email.toLowerCase();
+  console.log(`Intento de login para email: ${email}`);
 
+  // Buscar en la tabla de usuarios
   const user = await authRepository.findByEmail(email);
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  console.log('Usuario encontrado:', user ? 'Sí' : 'No');
+
+  // Buscar en la tabla de beneficiarios
+  const beneficiary = await beneficiaryRepository.findByEmail(email);
+  console.log('Beneficiario encontrado:', beneficiary ? 'Sí' : 'No');
+
+  // Si no existe ni como usuario ni como beneficiario
+  if (!user && !beneficiary) {
+    console.log('No se encontró ni usuario ni beneficiario con este email');
     throw new UnauthorizedError('Credenciales Inválidas');
   }
 
-  // Verificar si el usuario ha verificado su correo
-  // if (!user.verified) {
-  //   throw new UnauthorizedError('Por favor verifica tu correo electrónico antes de iniciar sesión');
-  // }
+  let accountType;
+  let accountData;
+  let isPasswordValid = false;
 
-  let isAgent = false;
-  let agentActive = false;
-  try {
-    const agent = await callCenterAgentService.getCallCenterAgentByUserId(
-      user.id
-    );
-    if (agent) {
-      isAgent = true;
-      agentActive = false;
+  // Verificar si es un usuario
+  if (user) {
+    isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      accountType = 'user';
+      accountData = user;
     }
-  } catch (error) {
-    isAgent = false;
-    agentActive = false;
+  }
+
+  // Si no es un usuario válido, verificar si es un beneficiario
+  if (!isPasswordValid && beneficiary) {
+    isPasswordValid = await bcrypt.compare(password, beneficiary.password);
+    if (isPasswordValid) {
+      accountType = 'beneficiary';
+      accountData = beneficiary;
+    }
+  }
+
+  // Si la contraseña no es válida para ninguna cuenta
+  if (!isPasswordValid) {
+    throw new UnauthorizedError('Credenciales Inválidas');
   }
 
   // Generar tokens
-  const accessToken = jwt.generateAccessToken({
-    id: user.id,
-    email: user.email,
-    isAgent: isAgent,
-    agentActive: agentActive,
-  });
+  const tokenPayload = {
+    id: accountData.id,
+    email: accountData.email,
+    accountType: accountType,
+    isAgent: accountType === 'user' ? false : false,
+    agentActive: accountType === 'user' ? false : false,
+    isBeneficiary: accountType === 'beneficiary',
+  };
+
+  const accessToken = jwt.generateAccessToken(tokenPayload);
   const refreshToken = jwt.generateRefreshToken({
-    id: user.id,
-    email: user.email,
+    id: accountData.id,
+    email: accountData.email,
+    accountType: accountType,
   });
 
-  // Guardar el refresh token en la BD
-  await authRepository.saveRefreshToken(user.id, refreshToken);
+  // Guardar el refresh token en la tabla correspondiente
+  await authRepository.saveRefreshToken(
+    accountData.id,
+    refreshToken,
+    accountType
+  );
 
-  return { accessToken, refreshToken };
+  // Eliminar el campo password de la respuesta
+  if (accountData.password) {
+    delete accountData.password;
+  }
+
+  // Preparar la respuesta según el tipo de cuenta
+  if (accountType === 'beneficiary') {
+    // Enriquecer la información del beneficiario
+    try {
+      // Obtener la ubicación
+      const location = await townshipRepository.findLocationByTownshipId(accountData.city_id);
+      
+      // Obtener imagen
+      const images = await beneficiaryImageRepository.getImagesByBeneficiary(accountData.id);
+      const image = images && images.length > 0 ? images[0] : null;
+      
+      // Obtener datos de salud
+      const healthData = await beneficiaryRepository.getBeneficiaryHealthData(accountData.id) || {
+        distinctives: [],
+        disabilities: [],
+        allergies: [],
+        diseases: [],
+        family_history: [],
+        medical_history: [],
+        medications: [],
+        vaccinations: []
+      };
+
+      // Obtener detalles del usuario propietario si es necesario
+      let ownerUser = null;
+      if (accountData.user_id) {
+        try {
+          ownerUser = await userRepository.getUserById(accountData.user_id);
+          if (ownerUser && ownerUser.password) {
+            delete ownerUser.password;
+          }
+        } catch (error) {
+          console.error('Error al obtener detalles del usuario propietario:', error);
+        }
+      }
+
+      const enrichedAccountData = {
+        ...accountData,
+        location,
+        image,
+        healthData,
+        ownerUser,
+        isAgent: false,
+        agentActive: false,
+        accountType: 'beneficiary'
+      };
+
+      return {
+        accessToken,
+        refreshToken,
+        user: enrichedAccountData
+      };
+    } catch (error) {
+      console.error('Error al enriquecer datos del beneficiario:', error);
+      
+      // Si hay un error al obtener datos adicionales, devolver la información básica
+      return {
+        accessToken,
+        refreshToken,
+        user: {
+          ...accountData,
+          isAgent: false,
+          agentActive: false,
+          accountType: 'beneficiary'
+        }
+      };
+    }
+  } else {
+    // Para usuarios, mantener la estructura existente
+    let isAgent = false;
+    let agentActive = false;
+    
+    try {
+      const agent = await callCenterAgentService.getCallCenterAgentByUserId(accountData.id);
+      if (agent) {
+        isAgent = true;
+        agentActive = agent.status === 'ACTIVE';
+      }
+    } catch (error) {
+      isAgent = false;
+      agentActive = false;
+    }
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        ...accountData,
+        isAgent,
+        agentActive,
+        accountType: 'user'
+      }
+    };
+  }
 };
+
+// const login = async (email, password) => {
+//   email = email.toLowerCase();
+
+//   const user = await authRepository.findByEmail(email);
+
+//   const beneficiary = await beneficiaryRepository.findByEmail(email);
+
+//   if (!user || !(await bcrypt.compare(password, user.password))) {
+//     throw new UnauthorizedError('Credenciales Inválidas');
+//   }
+
+//   // Verificar si el usuario ha verificado su correo
+//   // if (!user.verified) {
+//   //   throw new UnauthorizedError('Por favor verifica tu correo electrónico antes de iniciar sesión');
+//   // }
+
+//   let isAgent = false;
+//   let agentActive = false;
+//   try {
+//     const agent = await callCenterAgentService.getCallCenterAgentByUserId(
+//       user.id
+//     );
+//     if (agent) {
+//       isAgent = true;
+//       agentActive = false;
+//     }
+//   } catch (error) {
+//     isAgent = false;
+//     agentActive = false;
+//   }
+
+//   // Generar tokens
+//   const accessToken = jwt.generateAccessToken({
+//     id: user.id,
+//     email: user.email,
+//     isAgent: isAgent,
+//     agentActive: agentActive,
+//   });
+//   const refreshToken = jwt.generateRefreshToken({
+//     id: user.id,
+//     email: user.email,
+//   });
+
+//   // Guardar el refresh token en la BD
+//   await authRepository.saveRefreshToken(user.id, refreshToken);
+
+//   return { accessToken, refreshToken };
+// };
 
 const refreshToken = async (token) => {
   const decoded = jwt.verifyToken(token, process.env.JWT_REFRESH_SECRET);
@@ -86,7 +264,15 @@ const refreshToken = async (token) => {
     throw new UnauthorizedError('Refresh Token inválido o expirado');
   }
 
-  const validToken = await authRepository.findRefreshToken(decoded.id, token);
+  // Determinar el tipo de cuenta
+  const accountType = decoded.accountType || 'user';
+
+  // Verificar si el token es válido
+  const validToken = await authRepository.findRefreshToken(
+    decoded.id,
+    token,
+    accountType
+  );
   if (!validToken) {
     throw new UnauthorizedError('Refresh Token no válido');
   }
@@ -95,6 +281,10 @@ const refreshToken = async (token) => {
   const newAccessToken = jwt.generateAccessToken({
     id: decoded.id,
     email: decoded.email,
+    accountType: accountType,
+    isAgent: decoded.isAgent || false,
+    agentActive: decoded.agentActive || false,
+    isBeneficiary: accountType === 'beneficiary',
   });
 
   return { accessToken: newAccessToken };
@@ -157,8 +347,6 @@ const verifyEmail = async (token) => {
   }
 };
 
-
-
 const deleteAccount = async (userId, password) => {
   const user = await userService.getUser(userId);
   if (!user) {
@@ -166,7 +354,9 @@ const deleteAccount = async (userId, password) => {
   }
 
   if (!password || !user.password) {
-    throw new ValidationError('Contraseña incorrecta o datos de usuario inválidos');
+    throw new ValidationError(
+      'Contraseña incorrecta o datos de usuario inválidos'
+    );
   }
 
   try {
@@ -180,7 +370,7 @@ const deleteAccount = async (userId, password) => {
   }
 
   await authRepository.deleteUserData(userId);
-  
+
   const deleted = await authRepository.deleteUserAccount(userId);
   if (!deleted) {
     throw new Error('No se pudo eliminar la cuenta');

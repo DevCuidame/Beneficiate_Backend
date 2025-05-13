@@ -87,6 +87,9 @@ const beneficiarySchema = Joi.object({
   base_64: Joi.string().optional().allow('').messages({
     'string.base': 'No has cargado una imagen',
   }),
+  email: Joi.string().optional().allow('', null).messages({
+    'string.base': 'No has cargado un email',
+  }),
 });
 
 module.exports = { beneficiarySchema };

@@ -13,7 +13,15 @@ const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Guardar la información decodificada en req
+    req.user = decoded;
+    
+    // Añadir propiedades específicas para facilitar verificaciones
+    req.isUser = decoded.accountType === 'user';
+    req.isBeneficiary = decoded.accountType === 'beneficiary';
+    
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
