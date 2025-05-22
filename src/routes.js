@@ -14,7 +14,7 @@ const paymentsRoutes = require('./modules/payments/payments.routes');
 const plansRoutes = require('./modules/plans/plans.routes');
 const passwordResetRoutes = require('./modules/auth/password/password.reset.routes');
 const emailVerificationRoutes = require('./modules/auth/verification/email.verification.routes');
-const workWithUsRoutes = require('./modules/work_with_us/work.verification.routes');
+const mailsRoutes = require('./modules/emails/mail.verification.routes');
 const agentChatRoutes = require('./modules/agent_chat/agent_chat.routes');
 const userHealthRoutes = require('./modules/users/health/user.health.routes'); 
 
@@ -40,7 +40,7 @@ router.use('/payments', paymentsRoutes);
 router.use('/plans', plansRoutes);
 router.use('/password', passwordResetRoutes);
 router.use('/email', emailVerificationRoutes);
-router.use('/work-with-us', workWithUsRoutes);
+router.use('/mails', mailsRoutes);
 router.use('/agent-chat', agentChatRoutes);
 
 module.exports = router;

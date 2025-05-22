@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const { ValidationError, NotFoundError } = require('../../../core/errors');
 const userRepository = require('../../users/user.repository');
 const transporter = require('../../../utils/emailConf');
-const resetPasswordTemplate = require('../../emails/resetPasswordTemplate');
+const resetPasswordTemplate = require('../../emails/templates/resetPasswordTemplate');
 
 /**
  * Genera un token JWT para restablecer la contraseña
