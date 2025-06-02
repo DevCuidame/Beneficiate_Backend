@@ -1,4 +1,4 @@
-const NewBeneficiaryEmailTemplate = (beneficiaryForm) => `
+const PayConfirmationEmailTemplate = (payForm) => `
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -129,58 +129,41 @@ const NewBeneficiaryEmailTemplate = (beneficiaryForm) => `
 
       <div class="content">
         <div class="info-contain">
-          <div class="welcome-text">¡Bienvenido a Benefíciate!</div>
-
-          <p class="description">Hola <strong>${beneficiaryForm.first_name}</strong>,</p>
+          <div class="welcome-text">¡Gracias por tu compra!</div>
 
           <p class="description">
-            Para comenzar a disfrutar de los beneficios que te ofrecemos, puedes
-            ingresar a nuestra app con los siguientes datos de acceso:
+            Tu pago ha sido procesado exitosamente y tu plan ${payForm.name} ya está activo. 
+            Gracias por confiar en Benefíciate para cuidar tu bienestar y el de tu familia.
           </p>
-
-          <p class="description">
-            Usuario: <strong>${beneficiaryForm.email}</strong><br />
-            Contraseña temporal: <strong>${beneficiaryForm.password}</strong>
-          </p>
-
-          <p class="description">
-            Por seguridad, te pedimos cambiar esta contraseña en tu primer
-            ingreso.
-          </p>
-
-          <p class="description">¿Qué puedes hacer desde la app?</p>
 
           <div class="benefits">
             <div class="benefit-item">
               <span class="benefit-icon">✓</span>
-              <span>Agendar citas médicas y de bienestar</span>
+              <span>Precio: ${payForm.price}</span>
             </div>
             <div class="benefit-item">
               <span class="benefit-icon">✓</span>
-              <span>Consultar la red de prestadores disponibles</span>
+              <span>Duracion ${payForm.duration}</span>
             </div>
             <div class="benefit-item">
               <span class="benefit-icon">✓</span>
-              <span>Acceder a descuentos en más de 55 ciudades</span>
+              <span
+                >Agendamiento fácil y rápido de tus citas desde nuestra
+                app.</span
+              >
             </div>
-            <div class="benefit-item">
-              <span class="benefit-icon">✓</span>
-              <span>
-                Ver tus beneficios y los de tu familia en un solo lugar
-              </span>
-            </div>
+            
+            <p class="description">
+              Tu plan está listo para usar. Puedes comenzar a agendar citas y 
+              disfrutar de todos los beneficios desde este momento.
+            </p>
+
+            <p class="description">
+              Tu bienestar y el de tu familia está en buenas manos.
+            </p>
+
+            <p class="description">El equipo de <strong>Benefíciate</strong></p>
           </div>
-
-          <p class="description">
-            Descarga la app y empieza a disfrutar de tu membresía.
-          </p>
-
-          <p class="description">
-            Si tienes alguna duda o necesitas ayuda, nuestro equipo de soporte
-            está disponible para asistirte.
-          </p>
-
-          <p class="description">El equipo de <strong>Benefíciate</strong></p>
         </div>
       </div>
 
@@ -224,4 +207,4 @@ const NewBeneficiaryEmailTemplate = (beneficiaryForm) => `
 </html>
 `;
 
-module.exports = NewBeneficiaryEmailTemplate;
+module.exports = PayConfirmationEmailTemplate;

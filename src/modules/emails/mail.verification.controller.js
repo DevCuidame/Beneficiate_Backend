@@ -47,8 +47,24 @@ const sendWelcomeEmail = async (req, res) => {
   }
 };
 
+/**
+ * Controlador para enviar correo de Bienvenida
+ * @param {Object} req - Objeto de solicitud Express
+ * @param {Object} res - Objeto de respuesta Express
+ */
+const sendPayConfirmationEmail = async (req, res) => {
+  try {    
+    const payForm = req.body;
+    const result = await workVerificationService.sendPayConfirmationEmail(payForm);
+    successResponse(res, result, result.message);
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
 module.exports = {
   sendWorkWithUsEmail,
   sendNewBeneficiaryEmail,
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendPayConfirmationEmail
 };
