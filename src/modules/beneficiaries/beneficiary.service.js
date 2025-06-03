@@ -50,50 +50,16 @@ const setupBeneficiaryAccount = async (beneficiaryId, beneficiaryData) => {
 
     // Actualizar el beneficiario con la contraseña hasheada
     await beneficiaryRepository.updateBeneficiaryPassword(beneficiaryId, hashedPassword);
+
+    beneficiaryData.password = tempPassword;
     
     // Enviar correo con la contraseña temporal
-    await sendBeneficiaryPasswordEmail(beneficiaryData, tempPassword);
+    await sendNewBeneficiaryEmail(beneficiaryData);
     
     return { success: true };
   } catch (error) {
     console.error('Error al configurar cuenta de beneficiario:', error);
     throw error;
-  }
-};
-
-// Función para enviar el correo con la contraseña temporal
-const sendBeneficiaryPasswordEmail = async (beneficiary, tempPassword) => {
-  try {
-    const transporter = require('../../utils/emailConf');
-    
-    // Construir enlace para login
-    const loginLink = `${process.env.FRONTEND_URL}/desktop/login`;
-    
-    // Configurar correo
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: beneficiary.email,
-      subject: 'Acceso a tu cuenta de beneficiario',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Bienvenido, ${beneficiary.first_name}!</h2>
-          <p>Has sido registrado como beneficiario en nuestra plataforma y ahora tienes acceso a tu cuenta.</p>
-          <p>Tu contraseña temporal es: <strong>${tempPassword}</strong></p>
-          <p>Por favor, usa el siguiente enlace para iniciar sesión:</p>
-          <a href="${loginLink}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Iniciar Sesión</a>
-          <p>Te recomendamos cambiar esta contraseña por una personal después de iniciar sesión.</p>
-          <p>Si no solicitaste esta cuenta, por favor ignora este mensaje.</p>
-        </div>
-      `
-    };
-
-    // Enviar correo
-    await transporter.sendMail(mailOptions);
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error al enviar correo con contraseña temporal:', error);
-    throw new Error('No se pudo enviar el correo con la contraseña temporal');
   }
 };
 
