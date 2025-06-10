@@ -72,8 +72,53 @@ const findByUserId = async (user_id) => {
   return result.rows;
 };
 
-// Metodo creado para obtener la informacion de la salud del beneficiario.
+/**
+ * Guarda un token de restablecimiento para un usuario
+ * @param {number} userId - ID del usuario
+ * @param {string} token - Token de restablecimiento
+ * @returns {Promise<void>}
+ */
+const saveResetToken = async (userId, token) => {
+  await pool.query(
+    `INSERT INTO password_reset_tokens (beneficiary_id, token, created_at, expires_at)
+     VALUES ($1, $2, NOW(), NOW() + INTERVAL '1 hour')
+     ON CONFLICT (user_id) 
+     DO UPDATE SET token = $2, created_at = NOW(), expires_at = NOW() + INTERVAL '1 hour', used = FALSE`,
+    [userId, token]
+  );
+};
 
+/**
+ * Verifica si un token de restablecimiento es válido
+ * @param {number} beneficiaryId - ID del usuario
+ * @param {string} token - Token a verificar
+ * @returns {Promise<boolean>} - True si el token es válido
+ */
+const checkResetToken = async (beneficiaryId, token) => {
+  const result = await pool.query(
+    `SELECT * FROM password_reset_tokens 
+     WHERE beneficiary_id = $1 AND token = $2 AND expires_at > NOW() AND used = FALSE`,
+    [beneficiaryId, token]
+  );
+
+  return result.rows.length > 0;
+};
+
+/**
+ * Invalida un token de restablecimiento después de usarlo
+ * @param {number} beneficiaryId - ID del usuario
+ * @param {string} token - Token a invalidar
+ * @returns {Promise<void>}
+ */
+const invalidateResetToken = async (beneficiaryId, token) => {
+  await pool.query(
+    `UPDATE password_reset_tokens SET used = TRUE 
+     WHERE beneficiary_id = $1 AND token = $2`,
+    [beneficiaryId, token]
+  );
+};
+
+// Metodo creado para obtener la informacion de la salud del beneficiario.
 const getBeneficiaryHealthData = async (beneficiary_id) => {
   const query = `
     SELECT 
@@ -341,6 +386,9 @@ module.exports = {
   removeBeneficiary,
   findById,
   countByUserId,
+  saveResetToken,
+  checkResetToken,
+  invalidateResetToken,
   getBeneficiaryHealthData,
   getBeneficiaryByUserId,
   countUserBeneficiaries,

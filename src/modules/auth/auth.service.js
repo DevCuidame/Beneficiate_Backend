@@ -84,6 +84,7 @@ const login = async (email, password) => {
     id: accountData.id,
     email: accountData.email,
     accountType: accountType,
+    admin: accountData.admin,
     isAgent: accountType === 'user' ? false : false,
     agentActive: accountType === 'user' ? false : false,
     isBeneficiary: accountType === 'beneficiary',

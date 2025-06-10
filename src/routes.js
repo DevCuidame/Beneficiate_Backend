@@ -16,6 +16,7 @@ const passwordResetRoutes = require('./modules/auth/password/password.reset.rout
 const emailVerificationRoutes = require('./modules/auth/verification/email.verification.routes');
 const mailsRoutes = require('./modules/emails/mail.verification.routes');
 const agentChatRoutes = require('./modules/agent_chat/agent_chat.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
 const userHealthRoutes = require('./modules/users/health/user.health.routes'); 
 
 const router = express.Router();
@@ -42,5 +43,6 @@ router.use('/password', passwordResetRoutes);
 router.use('/email', emailVerificationRoutes);
 router.use('/mails', mailsRoutes);
 router.use('/agent-chat', agentChatRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;

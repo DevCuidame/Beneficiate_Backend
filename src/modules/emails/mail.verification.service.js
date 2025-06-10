@@ -38,7 +38,6 @@ const sendWorkWithUsEmail = async (doctorForm) => {
  * @returns {Object} - Resultado de la operación
  */
 const sendNewBeneficiaryEmail = async (beneficiaryForm) => {
-
   try {
     const mailOptions = {
       from: process.env.EMAIL_USER,  // Remitente, tu correo
