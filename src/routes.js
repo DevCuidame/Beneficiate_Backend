@@ -10,6 +10,7 @@ const chatRoutes = require('./modules/chat/chat.routes');
 const medicalProfessionalsRoutes = require('./modules/medical_professionals/medicalProfessional.routes');
 const medicalSpecialitiesRoutes = require('./modules/medical_specialties/medical_specialties.routes');
 const authenticate = require('./middlewares/auth.middleware');
+const authenticateAdmin = require('./middlewares/validateAdmin.middleware');
 const paymentsRoutes = require('./modules/payments/payments.routes');
 const plansRoutes = require('./modules/plans/plans.routes');
 const passwordResetRoutes = require('./modules/auth/password/password.reset.routes');
@@ -43,6 +44,6 @@ router.use('/password', passwordResetRoutes);
 router.use('/email', emailVerificationRoutes);
 router.use('/mails', mailsRoutes);
 router.use('/agent-chat', agentChatRoutes);
-router.use('/admin', adminRoutes);
+router.use('/admin', authenticateAdmin, adminRoutes);
 
 module.exports = router;
