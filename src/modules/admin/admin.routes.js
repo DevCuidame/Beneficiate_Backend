@@ -1,9 +1,9 @@
-//TODO: Toca agregar autenticacion de administrador
-
 const express = require('express');
 const router = express.Router();
-const { getAllUsers } = require('./admin.controller');
+const useAdminController = require('./admin.controller');
 
-router.get('/users', getAllUsers);
+router.get('/users', useAdminController.getAllUsers);
+router.get('/plans', useAdminController.getAllPlans);
+router.post('/plan', useAdminController.createPlan);
 
 module.exports = router;

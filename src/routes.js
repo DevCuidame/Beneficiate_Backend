@@ -44,6 +44,6 @@ router.use('/password', passwordResetRoutes);
 router.use('/email', emailVerificationRoutes);
 router.use('/mails', mailsRoutes);
 router.use('/agent-chat', agentChatRoutes);
-router.use('/admin', authenticateAdmin, adminRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;

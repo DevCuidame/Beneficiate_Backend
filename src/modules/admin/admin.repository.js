@@ -1,7 +1,7 @@
-const pool = require('../../config/connection');
+const pool = require("../../config/connection");
 
 const findAllUsers = async () => {
-    const query = `
+  const query = `
         SELECT 
             u.id, 
             u.first_name, 
@@ -22,10 +22,49 @@ const findAllUsers = async () => {
         ORDER BY u.created_at DESC;
     `;
 
-    const result = await pool.query(query);
-    return result.rows;
-}
+  const result = await pool.query(query);
+  return result.rows;
+};
+
+const findAllPlans = async () => {
+  const query = `
+        SELECT * FROM plans;
+    `;
+
+  const result = await pool.query(query);
+  return result.rows;
+};
+
+const createPlan = async (planData) => {
+  const {
+    name,
+    description,
+    price,
+    duration_days,
+    max_beneficiaries,
+    is_active,
+    code,
+  } = planData;
+
+  const result = await pool.query(
+    `INSERT INTO "plans" (name, description, price, duration_days, max_beneficiaries, is_active, code) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [
+      name,
+      description,
+      price,
+      duration_days,
+      max_beneficiaries,
+      is_active,
+      code,
+    ]
+  );
+
+  return result.rows[0];
+};
 
 module.exports = {
-    findAllUsers,
-}
+  findAllUsers,
+  findAllPlans,
+  createPlan,
+};
