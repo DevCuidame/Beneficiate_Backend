@@ -63,8 +63,27 @@ const createPlan = async (planData) => {
   return result.rows[0];
 };
 
+const updatePlan = async (id, fields, values) => {
+  if (fields.length === 0) {
+    throw new Error('No fields to update');
+  }
+
+  values.push(id);
+  const query = `
+    UPDATE "plans"
+    SET ${fields.join(', ')}
+    WHERE id = $${values.length}
+    RETURNING *;
+  `;
+
+  const result = await pool.query(query, values);
+  return result.rows[0];
+};
+
+
 module.exports = {
   findAllUsers,
   findAllPlans,
   createPlan,
+  updatePlan,
 };
