@@ -17,7 +17,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://beneficiate.co', 'http://localhost:8100', 'http://localhost:8101'], 
+  origin: ['https://beneficiate.co', 'http://localhost:8100', 'http://localhost:4200', 'http://localhost:8101'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'wompi-signature']
 }));

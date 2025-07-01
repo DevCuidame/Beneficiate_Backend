@@ -11,6 +11,7 @@ const emailVerificationService = require('./verification/email.verification.serv
 const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
 const userService = require('../users/user.service');
 const beneficiaryRepository = require('../beneficiaries/beneficiary.repository');
+const { sendWelcomeEmail } = require('../emails/mail.verification.controller');
 
 const userRepository = require('../users/user.repository');
 
@@ -83,6 +84,7 @@ const login = async (email, password) => {
     id: accountData.id,
     email: accountData.email,
     accountType: accountType,
+    admin: accountData.admin,
     isAgent: accountType === 'user' ? false : false,
     agentActive: accountType === 'user' ? false : false,
     isBeneficiary: accountType === 'beneficiary',
@@ -238,6 +240,7 @@ const register = async (userData) => {
     // No lanzamos error para no detener el registro
   }
 
+  sendWelcomeEmail(userData.email);
   return newUser;
 };
 

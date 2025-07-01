@@ -49,7 +49,9 @@ const verifyResetToken = async (req, res) => {
  */
 const resetPassword = async (req, res) => {
   try {
+    console.log('Token recibido:', req.body);
     const { token, newPassword } = req.body;
+  
     
     if (!token) {
       return errorResponse(res, { message: 'Token no proporcionado', statusCode: 400 });

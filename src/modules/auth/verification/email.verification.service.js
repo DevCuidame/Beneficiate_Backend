@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { ValidationError, NotFoundError } = require('../../../core/errors');
 const userRepository = require('../../users/user.repository');
 const transporter = require('../../../utils/emailConf');
-const verifyEmailTemplate = require('../../emails/verifyEmailTemplate');
+const verifyEmailTemplate = require('../../emails/templates/verifyEmailTemplate');
 
 /**
  * Genera un token JWT para verificación de correo electrónico
