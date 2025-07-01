@@ -3,7 +3,7 @@ const workVerificationService = require('./mail.verification.service');
 const { successResponse, errorResponse } = require('../../core/responses');
 
 /**
- * Controlador para enviar correo de verificación (uso interno)
+ * Controlador para enviar correo de personas interesadas en trabajar con nosotros.
  * @param {Object} req - Objeto de solicitud Express
  * @param {Object} res - Objeto de respuesta Express
  */
@@ -18,7 +18,7 @@ const sendWorkWithUsEmail = async (req, res) => {
 };
 
 /**
- * Controlador para enviar correo de Bienvenida
+ * Controlador para enviar correo de bienvenida a un nuevo beneficiario
  * @param {Object} req - Objeto de solicitud Express
  * @param {Object} res - Objeto de respuesta Express
  */
@@ -48,7 +48,7 @@ const sendWelcomeEmail = async (req, res) => {
 };
 
 /**
- * Controlador para enviar correo de Bienvenida
+ * Controlador para enviar correo de confirmacion de Pago
  * @param {Object} req - Objeto de solicitud Express
  * @param {Object} res - Objeto de respuesta Express
  */
@@ -62,9 +62,25 @@ const sendPayConfirmationEmail = async (req, res) => {
   }
 };
 
+/**
+ * Controlador para enviar correo de confirmacion de cita
+ * @param {Object} req - Objeto de solicitud Express
+ * @param {Object} res - Objeto de respuesta Express
+ */
+const sendMeetingConfirmationEmail = async (req, res) => {
+  try {    
+    const payForm = req.body;
+    const result = await workVerificationService.sendMeetingConfirmationEmail(payForm);
+    successResponse(res, result, result.message);
+  } catch (error) {
+    errorResponse(res, error);
+  }
+};
+
 module.exports = {
   sendWorkWithUsEmail,
   sendNewBeneficiaryEmail,
   sendWelcomeEmail,
-  sendPayConfirmationEmail
+  sendPayConfirmationEmail,
+  sendMeetingConfirmationEmail,
 };

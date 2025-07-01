@@ -55,7 +55,7 @@ const findByEmail = async (email) => {
   const result = await pool.query(
     `SELECT 
       id, first_name, last_name, identification_type, identification_number, 
-      address, city_id, phone, gender, birth_date, email, verified, created_at, plan_id
+      address, city_id, phone, gender, birth_date, email, verified, admin, created_at, plan_id
      FROM users 
      WHERE email = $1;`,
     [email]

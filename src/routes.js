@@ -10,12 +10,14 @@ const chatRoutes = require('./modules/chat/chat.routes');
 const medicalProfessionalsRoutes = require('./modules/medical_professionals/medicalProfessional.routes');
 const medicalSpecialitiesRoutes = require('./modules/medical_specialties/medical_specialties.routes');
 const authenticate = require('./middlewares/auth.middleware');
+const authenticateAdmin = require('./middlewares/validateAdmin.middleware');
 const paymentsRoutes = require('./modules/payments/payments.routes');
 const plansRoutes = require('./modules/plans/plans.routes');
 const passwordResetRoutes = require('./modules/auth/password/password.reset.routes');
 const emailVerificationRoutes = require('./modules/auth/verification/email.verification.routes');
 const mailsRoutes = require('./modules/emails/mail.verification.routes');
 const agentChatRoutes = require('./modules/agent_chat/agent_chat.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
 const userHealthRoutes = require('./modules/users/health/user.health.routes'); 
 
 const router = express.Router();
@@ -42,5 +44,6 @@ router.use('/password', passwordResetRoutes);
 router.use('/email', emailVerificationRoutes);
 router.use('/mails', mailsRoutes);
 router.use('/agent-chat', agentChatRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;

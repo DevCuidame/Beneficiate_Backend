@@ -2,7 +2,7 @@ const pool = require('../../config/connection');
 
 const findAllPlans = async () => {
   const result = await pool.query(
-    `SELECT id, name, description, price, duration_days, max_beneficiaries, is_active, created_at
+    `SELECT id, name, description, price, duration_days, max_beneficiaries, is_active, to_show, created_at
      FROM plans
      WHERE is_active = TRUE`
   );

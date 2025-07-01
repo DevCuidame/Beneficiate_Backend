@@ -1,4 +1,5 @@
 const beneficiaryRepository = require('../beneficiaries/beneficiary.repository');
+const { sendNewBeneficiaryEmail } = require('../emails/mail.verification.service');
 const { ValidationError, NotFoundError } = require('../../core/errors');
 const { buildImage } = require('../../utils/image.utils');
 const path = require('path');
@@ -52,9 +53,16 @@ const setupBeneficiaryAccount = async (beneficiaryId, beneficiaryData) => {
     await beneficiaryRepository.updateBeneficiaryPassword(beneficiaryId, hashedPassword);
 
     beneficiaryData.password = tempPassword;
+
+    const { email, first_name, password } = beneficiaryData;
+    const beneficiaryForm = {
+      email,
+      first_name,
+      password
+    };
     
     // Enviar correo con la contraseña temporal
-    await sendNewBeneficiaryEmail(beneficiaryData);
+    await sendNewBeneficiaryEmail(beneficiaryForm);
     
     return { success: true };
   } catch (error) {
