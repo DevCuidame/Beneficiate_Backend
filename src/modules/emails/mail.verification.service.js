@@ -4,7 +4,7 @@ const workEmailTemplate = require('./templates/workEmailTemplate');
 const WelcomeEmailTemplate = require('./templates/welcomeEmailTemplate');
 const NewBeneficiaryEmailTemplate = require('./templates/newBeneficiaryEmailTemplate');
 const PayConfirmationEmailTemplate = require('./templates/payConfirmationEmailTemplate');
-const MeetingConfirmationEmailTemplate = require('./templates/meetingConfirmationEmailTemplate');
+const MeetingConfirmationEmailTemplate = require('./templates/MeetingConfirmationEmailTemplate');
 
 /**
  * Envía un correo notificando el interés de trabajar con nosotros
