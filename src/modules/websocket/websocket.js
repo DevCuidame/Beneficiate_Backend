@@ -9,21 +9,31 @@ const appointmentService = require('../appointment/appointment.service');
 const chatbotFlow = require('./chatbotFlow');
 const agentChatService = require('../agent_chat/agent_chat.service');
 const callCenterAgentService = require('../call_center_agents/call_center_agents.service');
+const url = require('url');
 
 const clients = new Map();
 const onlineUsers = new Set();
 const agentClients = new Map();
 
-const initializeWebSocket = (server) => {
+const initializeWebSocket = (server, wsPath = '/ws') => {
   const wss = new WebSocket.Server({ noServer: true });
 
   server.on('upgrade', async (request, socket, head) => {
+    // Verificar que la ruta sea la correcta
+    const pathname = url.parse(request.url).pathname;
+    
+    if (pathname !== wsPath) {
+      socket.destroy();
+      return;
+    }
+
     let token = request.headers['sec-websocket-protocol'];
     if (!token) {
       socket.destroy();
       return;
     }
     token = token.split(', ')[1] || token;
+    
     try {
       const decodedToken = jwt.verifyToken(token, process.env.JWT_SECRET);
       if (!decodedToken || !decodedToken.id) {

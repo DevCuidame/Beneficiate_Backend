@@ -29,8 +29,8 @@ app.use(morgan('dev'));
 
 const server = http.createServer(app);
 
-// Inicializar WebSocket con el servidor HTTP
-initializeWebSocket(server);
+// Inicializar WebSocket con el servidor HTTP y ruta específica
+initializeWebSocket(server, '/ws');
 
 app.use('/uploads', express.static('/home/beneficiate/uploads'));
 app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
