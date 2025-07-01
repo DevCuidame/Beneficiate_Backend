@@ -1,4 +1,4 @@
-const MeetingConfirmationEmailTemplate = (meetForm) => `
+const meetingConfirmationEmailTemplate = (meetForm) => `
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -174,4 +174,4 @@ const MeetingConfirmationEmailTemplate = (meetForm) => `
 </html>
 `;
 
-module.exports = MeetingConfirmationEmailTemplate;
+module.exports = meetingConfirmationEmailTemplate;
